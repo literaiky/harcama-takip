@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harcama Takip</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .modal-backdrop { background: rgba(0,0,0,0.6); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 8px; }
+</style>
+</head>
+<body class="bg-zinc-950 text-white min-h-screen">
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="hidden min-h-screen flex items-center justify-center px-6">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold mb-1">Harcama Defteri</h1>
+      <p class="text-sm text-zinc-500" id="auth-subtitle">Hesabına giriş yap</p>
+    </div>
+
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">E-posta</label>
+        <input type="email" id="auth-email" placeholder="ornek@mail.com" autocomplete="email" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Şifre</label>
+        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+      </div>
+
+      <p id="auth-error" class="hidden text-xs font-medium text-red-400"></p>
+      <p id="auth-info" class="hidden text-xs font-medium text-lime-400"></p>
+
+      <button id="auth-submit" onclick="handleAuthSubmit()" class="w-full bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3.5 transition-colors">
+        Giriş Yap
+      </button>
+
+      <button onclick="toggleAuthMode()" class="w-full text-center text-xs font-medium text-zinc-400 hover:text-white transition-colors">
+        <span id="auth-toggle-text">Hesabın yok mu? Kayıt ol</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen" class="hidden">
+
+<div class="max-w-5xl mx-auto px-6 py-10">
+
+  <!-- HEADER -->
+  <header class="flex items-center justify-between mb-10">
+    <div>
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1" id="header-month"></p>
+      <h1 class="text-2xl font-bold">Harcama Defteri</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-3 text-right">
+        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Toplam</p>
+        <p class="text-2xl font-bold text-white" id="month-total">₺0,00</p>
+      </div>
+      <button onclick="handleLogout()" title="Çıkış yap" class="bg-zinc-900 border border-zinc-800 hover:border-red-400 hover:text-red-400 text-zinc-500 rounded-2xl px-4 py-3 text-xs font-semibold transition-colors h-full">
+        Çıkış
+      </button>
+    </div>
+  </header>
+
+  <!-- CARDS GRID -->
+  <section class="mb-10">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kartlarım</h2>
+      <button onclick="openCardModal()" class="text-sm font-medium text-lime-400 hover:text-lime-300 transition-colors flex items-center gap-1">
+        <span class="text-lg leading-none">+</span> Kart Ekle
+      </button>
+    </div>
+
+    <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- cards render here -->
+    </div>
+    <p id="cards-empty" class="hidden text-sm text-zinc-500 bg-zinc-900 border border-dashed border-zinc-800 rounded-2xl p-6 text-center">
+      Henüz kart eklenmedi. "Kart Ekle" ile başlayabilirsin.
+    </p>
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+    <!-- NEW EXPENSE FORM -->
+    <section class="lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+      <h2 class="text-lg font-bold text-white mb-5">Yeni Harcama</h2>
+
+      <div class="space-y-4">
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-2">Tutar</label>
+          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
+            <span class="text-lg font-bold text-zinc-500 mr-2">₺</span>
+            <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-lg font-bold text-white placeholder-zinc-600 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Category -->
+          <div class="relative">
+            <label class="block text-xs font-medium text-zinc-400 mb-2">Kategori</label>
+            <button id="category-trigger" onclick="toggleDropdown('category-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-left hover:border-zinc-700 transition-colors">
+              <span id="category-label" class="flex items-center gap-2 text-sm font-medium text-white">
+                <span class="text-zinc-500">Kategori seç</span>
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="category-dropdown" class="hidden absolute z-20 mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-h-56 overflow-y-auto p-1">
+              <!-- options render here -->
+            </div>
+          </div>
+
+          <!-- Card -->
+          <div class="relative">
+            <label class="block text-xs font-medium text-zinc-400 mb-2">Kart</label>
+            <button id="card-trigger" onclick="toggleDropdown('card-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-left hover:border-zinc-700 transition-colors">
+              <span id="card-label" class="text-sm font-medium text-zinc-500">Kart seç</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="card-dropdown" class="hidden absolute z-20 mt-2 w-full bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-h-56 overflow-y-auto p-1">
+              <!-- options render here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Installment -->
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-2">Ödeme Tipi</label>
+          <div id="installment-options" class="flex flex-wrap gap-2">
+            <!-- chips render here -->
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-2">Not <span class="text-zinc-600">(opsiyonel)</span></label>
+          <input type="text" id="note-input" placeholder="örn. Haftalık market alışverişi" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        </div>
+
+        <p id="form-error" class="hidden text-xs font-medium text-red-400"></p>
+
+        <button onclick="saveExpense()" class="w-full bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3.5 transition-colors">
+          Harcamayı Kaydet
+        </button>
+
+      </div>
+    </section>
+
+    <!-- SIDEBAR: Categories + Recent -->
+    <div class="space-y-8">
+
+      <!-- Categories -->
+      <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kategoriler</h2>
+          <button onclick="openCategoryModal()" class="text-lime-400 hover:text-lime-300 transition-colors text-lg leading-none">+</button>
+        </div>
+        <div id="categories-list" class="flex flex-wrap gap-2">
+          <!-- category chips render here -->
+        </div>
+      </section>
+
+      <!-- Recent Transactions -->
+      <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase mb-4">Son Harcamalar</h2>
+        <div id="recent-list" class="divide-y divide-zinc-800">
+          <!-- transactions render here -->
+        </div>
+        <p id="recent-empty" class="hidden text-sm text-zinc-500 text-center py-4">
+          Henüz harcama eklenmedi.
+        </p>
+      </section>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- CARD MODAL -->
+<div id="card-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
+  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm">
+    <h3 class="text-lg font-bold mb-4">Yeni Kart Ekle</h3>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Kart Adı</label>
+        <input type="text" id="card-name-input" placeholder="örn. Bonus Card" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Kart Limiti (₺)</label>
+        <input type="text" inputmode="decimal" id="card-limit-input" placeholder="örn. 15000" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+      </div>
+      <p id="card-modal-error" class="hidden text-xs font-medium text-red-400"></p>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeCardModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">Vazgeç</button>
+      <button onclick="addCard()" class="flex-1 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">Ekle</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div id="category-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
+  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm">
+    <h3 class="text-lg font-bold mb-4">Yeni Kategori Ekle</h3>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Kategori Adı</label>
+        <input type="text" id="category-name-input" placeholder="örn. Spor" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Renk</label>
+        <div id="color-options" class="flex flex-wrap gap-2">
+          <!-- color swatches render here -->
+        </div>
+      </div>
+      <p id="category-modal-error" class="hidden text-xs font-medium text-red-400"></p>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeCategoryModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">Vazgeç</button>
+      <button onclick="addCategory()" class="flex-1 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">Ekle</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-screen -->
+
+<script>
+  /* ---------------------------------------------------------
+     SUPABASE SETUP
+  --------------------------------------------------------- */
+  const SUPABASE_URL = 'https://hirsmssklysuemssqmgn.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_SF5yNC2EYsHGXmWPRDSYsg_86WULxGv';
+
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUser = null;
+  let isSignUpMode = false;
+
+  /* ---------------------------------------------------------
+     CONSTANTS
+  --------------------------------------------------------- */
+  const COLOR_PALETTE = [
+    { name: 'lime',    bg: 'bg-lime-400'   },
+    { name: 'sky',     bg: 'bg-sky-400'    },
+    { name: 'amber',   bg: 'bg-amber-400'  },
+    { name: 'pink',    bg: 'bg-pink-400'   },
+    { name: 'red',     bg: 'bg-red-400'    },
+    { name: 'purple',  bg: 'bg-purple-400' },
+    { name: 'emerald', bg: 'bg-emerald-400'},
+    { name: 'orange',  bg: 'bg-orange-400' },
+    { name: 'zinc',    bg: 'bg-zinc-500'   },
+  ];
+
+  const INSTALLMENT_OPTIONS = [1, 3, 6, 9, 12];
+
+  let state = {
+    cards: [],
+    categories: [],
+    expenses: [],
+    selectedCategoryId: null,
+    selectedCardId: null,
+    selectedInstallment: 1,
+    selectedColor: COLOR_PALETTE[0].name,
+  };
+
+  /* ---------------------------------------------------------
+     AUTH
+  --------------------------------------------------------- */
+  function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    document.getElementById('auth-submit').textContent = isSignUpMode ? 'Kayıt Ol' : 'Giriş Yap';
+    document.getElementById('auth-subtitle').textContent = isSignUpMode ? 'Yeni hesap oluştur' : 'Hesabına giriş yap';
+    document.getElementById('auth-toggle-text').textContent = isSignUpMode ? 'Hesabın var mı? Giriş yap' : 'Hesabın yok mu? Kayıt ol';
+    document.getElementById('auth-error').classList.add('hidden');
+    document.getElementById('auth-info').classList.add('hidden');
+  }
+
+  async function handleAuthSubmit() {
+    const errorEl = document.getElementById('auth-error');
+    const infoEl = document.getElementById('auth-info');
+    errorEl.classList.add('hidden');
+    infoEl.classList.add('hidden');
+
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+
+    if (!email || !password) {
+      return showError(errorEl, 'Lütfen e-posta ve şifre gir.');
+    }
+    if (password.length < 6) {
+      return showError(errorEl, 'Şifre en az 6 karakter olmalı.');
+    }
+
+    const submitBtn = document.getElementById('auth-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Bekleyin...';
+
+    try {
+      if (isSignUpMode) {
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) throw error;
+
+        if (data.session) {
+          // Auto-confirmed, go straight in
+          await onAuthSuccess(data.session.user);
+        } else {
+          infoEl.textContent = 'Kayıt başarılı! E-postana gelen onay linkine tıkladıktan sonra giriş yapabilirsin.';
+          infoEl.classList.remove('hidden');
+        }
+      } else {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await onAuthSuccess(data.user);
+      }
+    } catch (err) {
+      showError(errorEl, translateAuthError(err.message));
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = isSignUpMode ? 'Kayıt Ol' : 'Giriş Yap';
+    }
+  }
+
+  function translateAuthError(msg) {
+    if (msg.includes('Invalid login credentials')) return 'E-posta veya şifre hatalı.';
+    if (msg.includes('User already registered')) return 'Bu e-posta ile zaten bir hesap var.';
+    if (msg.includes('Email not confirmed')) return 'E-posta adresini onaylaman gerekiyor.';
+    return msg;
+  }
+
+  async function handleLogout() {
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    state = { cards: [], categories: [], expenses: [], selectedCategoryId: null, selectedCardId: null, selectedInstallment: 1, selectedColor: COLOR_PALETTE[0].name };
+    showAuthScreen();
+  }
+
+  async function onAuthSuccess(user) {
+    currentUser = user;
+    await ensureDefaultData();
+    await loadAllData();
+    showAppScreen();
+    renderAll();
+  }
+
+  function showAuthScreen() {
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('app-screen').classList.add('hidden');
+  }
+
+  function showAppScreen() {
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app-screen').classList.remove('hidden');
+  }
+
+  /* ---------------------------------------------------------
+     DATA: LOAD FROM SUPABASE
+  --------------------------------------------------------- */
+  async function loadAllData() {
+    const [cardsRes, categoriesRes, expensesRes] = await Promise.all([
+      supabaseClient.from('cards').select('*').order('created_at', { ascending: true }),
+      supabaseClient.from('categories').select('*').order('created_at', { ascending: true }),
+      supabaseClient.from('expenses').select('*').order('created_at', { ascending: false }),
+    ]);
+
+    state.cards = (cardsRes.data || []).map(c => ({ id: c.id, name: c.name, limit: Number(c.card_limit) }));
+    state.categories = (categoriesRes.data || []).map(c => ({ id: c.id, name: c.name, color: c.color }));
+    state.expenses = (expensesRes.data || []).map(e => ({
+      id: e.id,
+      amount: Number(e.amount),
+      categoryId: e.category_id,
+      cardId: e.card_id,
+      installment: e.installment,
+      note: e.note || '',
+      date: e.created_at,
+    }));
+  }
+
+  // First-time setup: give a brand new account some starter categories
+  async function ensureDefaultData() {
+    const { count, error } = await supabaseClient
+      .from('categories')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      console.error('Kategori kontrolü başarısız', error);
+      return;
+    }
+
+    if (count === 0) {
+      const defaults = [
+        { name: 'Market', color: 'lime' },
+        { name: 'Ulaşım', color: 'sky' },
+        { name: 'Faturalar', color: 'amber' },
+        { name: 'Eğlence', color: 'pink' },
+        { name: 'Giyim', color: 'red' },
+        { name: 'Diğer', color: 'zinc' },
+      ].map(c => ({ ...c, user_id: currentUser.id }));
+
+      const { error: insertError } = await supabaseClient.from('categories').insert(defaults);
+      if (insertError) console.error('Varsayılan kategoriler eklenemedi', insertError);
+    }
+  }
+  function formatCurrency(value) {
+    return '₺' + value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function colorBg(colorName) {
+    const found = COLOR_PALETTE.find(c => c.name === colorName);
+    return found ? found.bg : 'bg-zinc-500';
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: HEADER / SUMMARY
+  --------------------------------------------------------- */
+  function renderHeader() {
+    const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    const now = new Date();
+    document.getElementById('header-month').textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+    const total = state.expenses.reduce((sum, e) => sum + e.amount, 0);
+    document.getElementById('month-total').textContent = formatCurrency(total);
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: CARDS
+  --------------------------------------------------------- */
+  function renderCards() {
+    const grid = document.getElementById('cards-grid');
+    const empty = document.getElementById('cards-empty');
+
+    if (state.cards.length === 0) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    grid.innerHTML = state.cards.map(card => {
+      const spent = getCardSpent(card.id);
+      const limit = card.limit || 0;
+      const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+
+      return `
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 group relative">
+          <button onclick="deleteCard('${card.id}')" title="Kartı sil" class="absolute top-4 right-4 text-zinc-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-sm">
+            ✕
+          </button>
+          <div class="flex items-start justify-between mb-6">
+            <p class="font-semibold text-white pr-6">${escapeHtml(card.name)}</p>
+            <div class="w-8 h-5 rounded bg-lime-400/80 shrink-0"></div>
+          </div>
+          <p class="text-xl font-bold text-white mb-2">${formatCurrency(spent)}</p>
+          <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
+            <span>Limit ${formatCurrency(limit)}</span>
+            <span>%${Math.round(pct)}</span>
+          </div>
+          <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div class="h-full bg-lime-400 rounded-full" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getCardSpent(cardId) {
+    return state.expenses
+      .filter(e => e.cardId === cardId)
+      .reduce((sum, e) => sum + e.amount, 0);
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: CATEGORIES
+  --------------------------------------------------------- */
+  function renderCategories() {
+    const list = document.getElementById('categories-list');
+
+    if (state.categories.length === 0) {
+      list.innerHTML = '<p class="text-sm text-zinc-500">Henüz kategori eklenmedi.</p>';
+      return;
+    }
+
+    list.innerHTML = state.categories.map(cat => `
+      <span class="group flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-200">
+        <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
+        ${escapeHtml(cat.name)}
+        <button onclick="deleteCategory('${cat.id}')" title="Kategoriyi sil" class="text-zinc-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 ml-1">✕</button>
+      </span>
+    `).join('');
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: DROPDOWNS (category / card select in form)
+  --------------------------------------------------------- */
+  function renderCategoryDropdown() {
+    const dropdown = document.getElementById('category-dropdown');
+
+    if (state.categories.length === 0) {
+      dropdown.innerHTML = '<p class="text-xs text-zinc-500 px-3 py-2">Önce bir kategori ekle.</p>';
+      return;
+    }
+
+    dropdown.innerHTML = state.categories.map(cat => `
+      <button type="button" onclick="selectCategory('${cat.id}')" class="w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg hover:bg-zinc-800 text-sm font-medium text-white transition-colors">
+        <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
+        ${escapeHtml(cat.name)}
+      </button>
+    `).join('');
+  }
+
+  function renderCardDropdown() {
+    const dropdown = document.getElementById('card-dropdown');
+
+    if (state.cards.length === 0) {
+      dropdown.innerHTML = '<p class="text-xs text-zinc-500 px-3 py-2">Önce bir kart ekle.</p>';
+      return;
+    }
+
+    dropdown.innerHTML = state.cards.map(card => `
+      <button type="button" onclick="selectCard('${card.id}')" class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-zinc-800 text-sm font-medium text-white transition-colors">
+        ${escapeHtml(card.name)}
+      </button>
+    `).join('');
+  }
+
+  function selectCategory(id) {
+    state.selectedCategoryId = id;
+    const cat = state.categories.find(c => c.id === id);
+    document.getElementById('category-label').innerHTML = `
+      <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
+      ${escapeHtml(cat.name)}
+    `;
+    closeAllDropdowns();
+  }
+
+  function selectCard(id) {
+    state.selectedCardId = id;
+    const card = state.cards.find(c => c.id === id);
+    const label = document.getElementById('card-label');
+    label.textContent = card.name;
+    label.classList.remove('text-zinc-500');
+    label.classList.add('text-white');
+    closeAllDropdowns();
+  }
+
+  function toggleDropdown(id) {
+    const el = document.getElementById(id);
+    const isHidden = el.classList.contains('hidden');
+    closeAllDropdowns();
+    if (isHidden) el.classList.remove('hidden');
+  }
+
+  function closeAllDropdowns() {
+    document.getElementById('category-dropdown').classList.add('hidden');
+    document.getElementById('card-dropdown').classList.add('hidden');
+  }
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#category-trigger') && !e.target.closest('#category-dropdown')) {
+      document.getElementById('category-dropdown').classList.add('hidden');
+    }
+    if (!e.target.closest('#card-trigger') && !e.target.closest('#card-dropdown')) {
+      document.getElementById('card-dropdown').classList.add('hidden');
+    }
+  });
+
+  /* ---------------------------------------------------------
+     RENDER: INSTALLMENT CHIPS
+  --------------------------------------------------------- */
+  function renderInstallmentOptions() {
+    const container = document.getElementById('installment-options');
+    container.innerHTML = INSTALLMENT_OPTIONS.map(n => {
+      const isActive = state.selectedInstallment === n;
+      const label = n === 1 ? 'Tek Çekim' : `${n} Taksit`;
+      const activeClasses = 'bg-lime-400 text-zinc-950';
+      const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+      return `
+        <button type="button" onclick="selectInstallment(${n})" class="px-4 py-2 rounded-full text-xs font-bold transition-colors ${isActive ? activeClasses : inactiveClasses}">
+          ${label}
+        </button>
+      `;
+    }).join('');
+  }
+
+  function selectInstallment(n) {
+    state.selectedInstallment = n;
+    renderInstallmentOptions();
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: RECENT TRANSACTIONS
+  --------------------------------------------------------- */
+  function renderRecent() {
+    const list = document.getElementById('recent-list');
+    const empty = document.getElementById('recent-empty');
+
+    const sorted = [...state.expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    if (sorted.length === 0) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    list.innerHTML = sorted.slice(0, 8).map(exp => {
+      const cat = state.categories.find(c => c.id === exp.categoryId);
+      const card = state.cards.find(c => c.id === exp.cardId);
+      const catName = cat ? cat.name : 'Kategori silindi';
+      const cardName = card ? card.name : 'Kart silindi';
+      const installmentText = exp.installment > 1 ? ` · ${exp.installment} taksit` : '';
+      const titleText = exp.note ? escapeHtml(exp.note) : catName;
+
+      return `
+        <div class="group flex items-center justify-between py-3 first:pt-0 last:pb-0">
+          <div>
+            <p class="text-sm font-medium text-white">${titleText}</p>
+            <p class="text-xs text-zinc-500 mt-0.5">${catName} · ${cardName}${installmentText}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <p class="text-sm font-bold text-white">${formatCurrency(exp.amount)}</p>
+            <button onclick="deleteExpense('${exp.id}')" title="Sil" class="text-zinc-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 text-sm">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* ---------------------------------------------------------
+     ACTIONS: EXPENSE FORM
+  --------------------------------------------------------- */
+  async function saveExpense() {
+    const errorEl = document.getElementById('form-error');
+    errorEl.classList.add('hidden');
+
+    const rawAmount = document.getElementById('amount-input').value.trim();
+    const amount = parseFloat(rawAmount.replace(',', '.'));
+
+    if (!rawAmount || isNaN(amount) || amount <= 0) {
+      return showError(errorEl, 'Lütfen geçerli bir tutar gir.');
+    }
+    if (!state.selectedCategoryId) {
+      return showError(errorEl, 'Lütfen bir kategori seç.');
+    }
+    if (!state.selectedCardId) {
+      return showError(errorEl, 'Lütfen bir kart seç.');
+    }
+
+    const note = document.getElementById('note-input').value.trim();
+
+    const { data, error } = await supabaseClient.from('expenses').insert({
+      user_id: currentUser.id,
+      amount: amount,
+      category_id: state.selectedCategoryId,
+      card_id: state.selectedCardId,
+      installment: state.selectedInstallment,
+      note: note,
+    }).select().single();
+
+    if (error) {
+      return showError(errorEl, 'Kaydedilemedi: ' + error.message);
+    }
+
+    state.expenses.unshift({
+      id: data.id,
+      amount: Number(data.amount),
+      categoryId: data.category_id,
+      cardId: data.card_id,
+      installment: data.installment,
+      note: data.note || '',
+      date: data.created_at,
+    });
+
+    // Reset form
+    document.getElementById('amount-input').value = '';
+    document.getElementById('note-input').value = '';
+    state.selectedCategoryId = null;
+    state.selectedCardId = null;
+    state.selectedInstallment = 1;
+    document.getElementById('category-label').innerHTML = '<span class="text-zinc-500">Kategori seç</span>';
+    const cardLabel = document.getElementById('card-label');
+    cardLabel.textContent = 'Kart seç';
+    cardLabel.classList.add('text-zinc-500');
+    cardLabel.classList.remove('text-white');
+
+    renderAll();
+  }
+
+  async function deleteExpense(id) {
+    const { error } = await supabaseClient.from('expenses').delete().eq('id', id);
+    if (error) { alert('Silinemedi: ' + error.message); return; }
+    state.expenses = state.expenses.filter(e => e.id !== id);
+    renderAll();
+  }
+
+  function showError(el, msg) {
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  /* ---------------------------------------------------------
+     ACTIONS: CARD MODAL
+  --------------------------------------------------------- */
+  function openCardModal() {
+    document.getElementById('card-name-input').value = '';
+    document.getElementById('card-limit-input').value = '';
+    document.getElementById('card-modal-error').classList.add('hidden');
+    document.getElementById('card-modal').classList.remove('hidden');
+  }
+
+  function closeCardModal() {
+    document.getElementById('card-modal').classList.add('hidden');
+  }
+
+  async function addCard() {
+    const errorEl = document.getElementById('card-modal-error');
+    errorEl.classList.add('hidden');
+
+    const name = document.getElementById('card-name-input').value.trim();
+    const rawLimit = document.getElementById('card-limit-input').value.trim();
+    const limit = parseFloat(rawLimit.replace(',', '.'));
+
+    if (!name) return showError(errorEl, 'Lütfen kart adı gir.');
+    if (!rawLimit || isNaN(limit) || limit <= 0) return showError(errorEl, 'Lütfen geçerli bir limit gir.');
+
+    const { data, error } = await supabaseClient.from('cards').insert({
+      user_id: currentUser.id,
+      name: name,
+      card_limit: limit,
+    }).select().single();
+
+    if (error) return showError(errorEl, 'Eklenemedi: ' + error.message);
+
+    state.cards.push({ id: data.id, name: data.name, limit: Number(data.card_limit) });
+    closeCardModal();
+    renderAll();
+  }
+
+  async function deleteCard(id) {
+    if (!confirm('Bu kartı silmek istediğine emin misin? Bu karta bağlı harcamalar listede kalır ancak "Kart silindi" olarak görünür.')) return;
+
+    const { error } = await supabaseClient.from('cards').delete().eq('id', id);
+    if (error) { alert('Silinemedi: ' + error.message); return; }
+
+    state.cards = state.cards.filter(c => c.id !== id);
+    state.expenses.forEach(e => { if (e.cardId === id) e.cardId = null; });
+
+    if (state.selectedCardId === id) {
+      state.selectedCardId = null;
+      const cardLabel = document.getElementById('card-label');
+      cardLabel.textContent = 'Kart seç';
+      cardLabel.classList.add('text-zinc-500');
+      cardLabel.classList.remove('text-white');
+    }
+    renderAll();
+  }
+
+  /* ---------------------------------------------------------
+     ACTIONS: CATEGORY MODAL
+  --------------------------------------------------------- */
+  function openCategoryModal() {
+    document.getElementById('category-name-input').value = '';
+    document.getElementById('category-modal-error').classList.add('hidden');
+    state.selectedColor = COLOR_PALETTE[0].name;
+    renderColorOptions();
+    document.getElementById('category-modal').classList.remove('hidden');
+  }
+
+  function closeCategoryModal() {
+    document.getElementById('category-modal').classList.add('hidden');
+  }
+
+  function renderColorOptions() {
+    const container = document.getElementById('color-options');
+    container.innerHTML = COLOR_PALETTE.map(c => {
+      const isSelected = state.selectedColor === c.name;
+      const ring = isSelected ? 'ring-2 ring-offset-2 ring-offset-zinc-900 ring-white' : '';
+      return `
+        <button type="button" onclick="selectColor('${c.name}')" class="w-7 h-7 rounded-full ${c.bg} ${ring} transition-all"></button>
+      `;
+    }).join('');
+  }
+
+  function selectColor(name) {
+    state.selectedColor = name;
+    renderColorOptions();
+  }
+
+  async function addCategory() {
+    const errorEl = document.getElementById('category-modal-error');
+    errorEl.classList.add('hidden');
+
+    const name = document.getElementById('category-name-input').value.trim();
+    if (!name) return showError(errorEl, 'Lütfen kategori adı gir.');
+
+    const exists = state.categories.some(c => c.name.toLowerCase() === name.toLowerCase());
+    if (exists) return showError(errorEl, 'Bu kategori zaten var.');
+
+    const { data, error } = await supabaseClient.from('categories').insert({
+      user_id: currentUser.id,
+      name: name,
+      color: state.selectedColor,
+    }).select().single();
+
+    if (error) return showError(errorEl, 'Eklenemedi: ' + error.message);
+
+    state.categories.push({ id: data.id, name: data.name, color: data.color });
+    closeCategoryModal();
+    renderAll();
+  }
+
+  async function deleteCategory(id) {
+    if (!confirm('Bu kategoriyi silmek istediğine emin misin? Bu kategoriye bağlı harcamalar listede kalır ancak "Kategori silindi" olarak görünür.')) return;
+
+    const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+    if (error) { alert('Silinemedi: ' + error.message); return; }
+
+    state.categories = state.categories.filter(c => c.id !== id);
+    state.expenses.forEach(e => { if (e.categoryId === id) e.categoryId = null; });
+
+    if (state.selectedCategoryId === id) {
+      state.selectedCategoryId = null;
+      document.getElementById('category-label').innerHTML = '<span class="text-zinc-500">Kategori seç</span>';
+    }
+    renderAll();
+  }
+
+  /* ---------------------------------------------------------
+     UTIL
+  --------------------------------------------------------- */
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  /* ---------------------------------------------------------
+     INIT
+  --------------------------------------------------------- */
+  function renderAll() {
+    renderHeader();
+    renderCards();
+    renderCategories();
+    renderCategoryDropdown();
+    renderCardDropdown();
+    renderInstallmentOptions();
+    renderRecent();
+  }
+
+  async function init() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) {
+      await onAuthSuccess(data.session.user);
+    } else {
+      showAuthScreen();
+    }
+  }
+
+  // Allow Enter key to submit auth form
+  document.addEventListener('DOMContentLoaded', () => {
+    ['auth-email', 'auth-password'].forEach(id => {
+      document.getElementById(id).addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleAuthSubmit();
+      });
+    });
+  });
+
+  init();
+</script>
+
+</body>
+</html>
