@@ -53,15 +53,15 @@
 <!-- APP SCREEN -->
 <div id="app-screen" class="hidden">
 
-<div class="max-w-5xl mx-auto px-6 py-10 pb-28">
+<div class="max-w-5xl mx-auto px-4 pt-5 pb-24">
 
   <!-- HEADER -->
-  <header class="flex items-center justify-between mb-8">
+  <header class="flex items-center justify-between mb-4">
     <div>
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1" id="header-month"></p>
-      <h1 class="text-2xl font-bold" id="page-title">Harcama Defteri</h1>
+      <p class="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase" id="header-month"></p>
+      <h1 class="text-xl font-bold" id="page-title">Harcama Defteri</h1>
     </div>
-    <button onclick="handleLogout()" title="Çıkış yap" class="bg-zinc-900 border border-zinc-800 hover:border-red-400 hover:text-red-400 text-zinc-500 rounded-2xl px-4 py-3 text-xs font-semibold transition-colors">
+    <button onclick="handleLogout()" title="Çıkış yap" class="bg-zinc-900 border border-zinc-800 hover:border-red-400 hover:text-red-400 text-zinc-500 rounded-xl px-3 py-2 text-xs font-semibold transition-colors">
       Çıkış
     </button>
   </header>
@@ -70,39 +70,39 @@
   <section id="page-home">
 
     <!-- Month Total -->
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 mb-6">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek Toplam</p>
-      <p class="text-3xl font-bold text-white" id="month-total">₺0,00</p>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 mb-3 flex items-center justify-between">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Bu Ay Ödenecek</p>
+      <p class="text-xl font-bold text-white" id="month-total">₺0,00</p>
     </div>
 
     <!-- NEW EXPENSE FORM -->
-    <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-      <h2 class="text-lg font-bold text-white mb-5">Yeni Harcama</h2>
+    <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+      <h2 class="text-sm font-bold text-white mb-3">Yeni Harcama</h2>
 
-      <div class="space-y-4">
+      <div class="space-y-3">
 
         <!-- Amount & Date -->
-        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
           <div>
-            <label class="block text-xs font-medium text-zinc-400 mb-2">Tutar</label>
-            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
-              <span class="text-lg font-bold text-zinc-500 mr-2">₺</span>
-              <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-lg font-bold text-white placeholder-zinc-600 focus:outline-none">
+            <label class="block text-xs font-medium text-zinc-400 mb-1.5">Tutar</label>
+            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors">
+              <span class="text-base font-bold text-zinc-500 mr-2">₺</span>
+              <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-base font-bold text-white placeholder-zinc-600 focus:outline-none">
             </div>
           </div>
           <div>
-            <label class="block text-xs font-medium text-zinc-400 mb-2">Tarih</label>
-            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors h-[52px]">
+            <label class="block text-xs font-medium text-zinc-400 mb-1.5">Tarih</label>
+            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors h-[44px]">
               <input type="date" id="date-input" class="bg-transparent text-sm font-medium text-white focus:outline-none [color-scheme:dark]">
             </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <!-- Category -->
           <div class="relative">
-            <label class="block text-xs font-medium text-zinc-400 mb-2">Kategori</label>
-            <button id="category-trigger" onclick="toggleDropdown('category-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-left hover:border-zinc-700 transition-colors">
+            <label class="block text-xs font-medium text-zinc-400 mb-1.5">Kategori</label>
+            <button id="category-trigger" onclick="toggleDropdown('category-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-left hover:border-zinc-700 transition-colors">
               <span id="category-label" class="flex items-center gap-2 text-sm font-medium text-white">
                 <span class="text-zinc-500">Kategori seç</span>
               </span>
@@ -115,8 +115,8 @@
 
           <!-- Card -->
           <div class="relative">
-            <label class="block text-xs font-medium text-zinc-400 mb-2">Kart</label>
-            <button id="card-trigger" onclick="toggleDropdown('card-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-left hover:border-zinc-700 transition-colors">
+            <label class="block text-xs font-medium text-zinc-400 mb-1.5">Kart</label>
+            <button id="card-trigger" onclick="toggleDropdown('card-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-left hover:border-zinc-700 transition-colors">
               <span id="card-label" class="text-sm font-medium text-zinc-500">Kart seç</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
@@ -128,21 +128,21 @@
 
         <!-- Installment -->
         <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-2">Ödeme Tipi</label>
-          <div id="installment-options" class="flex flex-wrap gap-2">
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Ödeme Tipi</label>
+          <div id="installment-options" class="flex flex-wrap gap-1.5">
             <!-- chips render here -->
           </div>
         </div>
 
         <!-- Note -->
         <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-2">Not <span class="text-zinc-600">(opsiyonel)</span></label>
-          <input type="text" id="note-input" placeholder="örn. Haftalık market alışverişi" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+          <label class="block text-xs font-medium text-zinc-400 mb-1.5">Not <span class="text-zinc-600">(opsiyonel)</span></label>
+          <input type="text" id="note-input" placeholder="örn. Haftalık market alışverişi" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
         </div>
 
         <p id="form-error" class="hidden text-xs font-medium text-red-400"></p>
 
-        <button onclick="saveExpense()" class="w-full bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3.5 transition-colors">
+        <button onclick="saveExpense()" class="w-full bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">
           Harcamayı Kaydet
         </button>
 
@@ -816,7 +816,7 @@
       const activeClasses = 'bg-lime-400 text-zinc-950';
       const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
       return `
-        <button type="button" onclick="selectInstallment(${n})" class="px-4 py-2 rounded-full text-xs font-bold transition-colors ${isActive ? activeClasses : inactiveClasses}">
+        <button type="button" onclick="selectInstallment(${n})" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? activeClasses : inactiveClasses}">
           ${label}
         </button>
       `;
