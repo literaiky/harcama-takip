@@ -11,6 +11,9 @@
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 8px; }
+
+  .nav-btn { color: #71717a; }
+  .nav-btn.active { color: #a3e635; }
 </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen">
@@ -50,30 +53,30 @@
 <!-- APP SCREEN -->
 <div id="app-screen" class="hidden">
 
-<div class="max-w-5xl mx-auto px-6 py-10">
+<div class="max-w-5xl mx-auto px-6 py-10 pb-28">
 
   <!-- HEADER -->
-  <header class="flex items-center justify-between mb-10">
+  <header class="flex items-center justify-between mb-8">
     <div>
       <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1" id="header-month"></p>
-      <h1 class="text-2xl font-bold">Harcama Defteri</h1>
+      <h1 class="text-2xl font-bold" id="page-title">Harcama Defteri</h1>
     </div>
-    <div class="flex items-center gap-3">
-      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-3 text-right">
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Toplam</p>
-        <p class="text-2xl font-bold text-white" id="month-total">₺0,00</p>
-      </div>
-      <button onclick="handleLogout()" title="Çıkış yap" class="bg-zinc-900 border border-zinc-800 hover:border-red-400 hover:text-red-400 text-zinc-500 rounded-2xl px-4 py-3 text-xs font-semibold transition-colors h-full">
-        Çıkış
-      </button>
-    </div>
+    <button onclick="handleLogout()" title="Çıkış yap" class="bg-zinc-900 border border-zinc-800 hover:border-red-400 hover:text-red-400 text-zinc-500 rounded-2xl px-4 py-3 text-xs font-semibold transition-colors">
+      Çıkış
+    </button>
   </header>
 
-  <!-- MAIN CONTENT: mobile-first order (form first), desktop grid -->
-  <div class="flex flex-col lg:grid lg:grid-cols-3 lg:gap-10 gap-10">
+  <!-- PAGE: HOME -->
+  <section id="page-home">
+
+    <!-- Month Total -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 mb-6">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek Toplam</p>
+      <p class="text-3xl font-bold text-white" id="month-total">₺0,00</p>
+    </div>
 
     <!-- NEW EXPENSE FORM -->
-    <section class="order-1 lg:order-2 lg:col-span-2 bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+    <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
       <h2 class="text-lg font-bold text-white mb-5">Yeni Harcama</h2>
 
       <div class="space-y-4">
@@ -146,44 +149,123 @@
       </div>
     </section>
 
-    <!-- CARDS CAROUSEL -->
-    <section class="order-2 lg:order-1 lg:col-span-3">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kartlarım</h2>
-        <button onclick="openCardModal()" class="text-sm font-medium text-lime-400 hover:text-lime-300 transition-colors flex items-center gap-1">
-          <span class="text-lg leading-none">+</span> Kart Ekle
-        </button>
-      </div>
+  </section>
+  <!-- /PAGE: HOME -->
 
-      <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2">
-        <!-- cards render here -->
-      </div>
-      <div id="cards-dots" class="flex items-center justify-center gap-1.5 mt-3">
-        <!-- dots render here -->
-      </div>
-      <p id="cards-empty" class="hidden text-sm text-zinc-500 bg-zinc-900 border border-dashed border-zinc-800 rounded-2xl p-6 text-center">
-        Henüz kart eklenmedi. "Kart Ekle" ile başlayabilirsin.
-      </p>
-    </section>
+  <!-- PAGE: CARDS -->
+  <section id="page-cards" class="hidden">
 
-    <!-- SIDEBAR: Categories -->
-    <div class="order-3 lg:order-3 lg:col-span-1 space-y-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kartlarım</h2>
+      <button onclick="openCardModal()" class="text-sm font-medium text-lime-400 hover:text-lime-300 transition-colors flex items-center gap-1">
+        <span class="text-lg leading-none">+</span> Kart Ekle
+      </button>
+    </div>
 
-      <!-- Categories -->
-      <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kategoriler</h2>
-          <button onclick="openCategoryModal()" class="text-lime-400 hover:text-lime-300 transition-colors text-lg leading-none">+</button>
+    <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2">
+      <!-- cards render here -->
+    </div>
+    <div id="cards-dots" class="flex items-center justify-center gap-1.5 mt-3">
+      <!-- dots render here -->
+    </div>
+    <p id="cards-empty" class="hidden text-sm text-zinc-500 bg-zinc-900 border border-dashed border-zinc-800 rounded-2xl p-6 text-center">
+      Henüz kart eklenmedi. "Kart Ekle" ile başlayabilirsin.
+    </p>
+
+    <!-- Selected card detail (inline) -->
+    <div id="card-detail-wrap" class="hidden mt-6 space-y-5">
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek</p>
+        <p id="card-detail-spent" class="text-2xl font-bold text-white mb-2"></p>
+        <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
+          <span id="card-detail-limit"></span>
+          <span id="card-detail-pct"></span>
         </div>
-        <div id="categories-list" class="flex flex-wrap gap-2">
-          <!-- category chips render here -->
+        <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+          <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full"></div>
         </div>
-      </section>
+      </div>
+
+      <div id="card-detail-upcoming-wrap" class="hidden">
+        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Gelecek Ödemeler</p>
+        <div id="card-detail-upcoming" class="space-y-2">
+          <!-- upcoming installment months render here -->
+        </div>
+      </div>
+
+      <div>
+        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Harcamalar</p>
+        <div id="card-detail-list" class="space-y-4">
+          <!-- grouped expenses render here -->
+        </div>
+        <p id="card-detail-empty" class="hidden text-sm text-zinc-500 text-center py-4">
+          Bu karta ait harcama bulunmuyor.
+        </p>
+      </div>
 
     </div>
-  </div>
+
+  </section>
+  <!-- /PAGE: CARDS -->
+
+  <!-- PAGE: STATS -->
+  <section id="page-stats" class="hidden">
+
+    <!-- Pie chart -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Toplam Harcama</p>
+      <p id="stats-total" class="text-2xl font-bold text-white mb-5">₺0,00</p>
+
+      <div id="stats-chart-wrap" class="flex items-center justify-center mb-2">
+        <!-- SVG pie chart renders here -->
+      </div>
+      <p id="stats-empty" class="hidden text-sm text-zinc-500 text-center py-4">
+        Henüz harcama bulunmuyor.
+      </p>
+    </div>
+
+    <!-- Category breakdown -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Kategori Dağılımı</p>
+      <div id="stats-breakdown" class="space-y-3">
+        <!-- category percentage rows render here -->
+      </div>
+    </div>
+
+    <!-- Categories management -->
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kategoriler</h2>
+        <button onclick="openCategoryModal()" class="text-lime-400 hover:text-lime-300 transition-colors text-lg leading-none">+</button>
+      </div>
+      <div id="categories-list" class="flex flex-wrap gap-2">
+        <!-- category chips render here -->
+      </div>
+    </div>
+
+  </section>
+  <!-- /PAGE: STATS -->
 
 </div>
+
+<!-- BOTTOM NAVIGATION -->
+<nav class="fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur border-t border-zinc-800 z-40">
+  <div class="max-w-5xl mx-auto px-6 flex items-center justify-around py-3">
+    <button onclick="switchPage('home')" data-nav="home" class="nav-btn flex flex-col items-center gap-1 text-xs font-medium transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10M9 21h6"/></svg>
+      Ana Sayfa
+    </button>
+    <button onclick="switchPage('cards')" data-nav="cards" class="nav-btn flex flex-col items-center gap-1 text-xs font-medium transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h2m4 0h4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+      Kartlar
+    </button>
+    <button onclick="switchPage('stats')" data-nav="stats" class="nav-btn flex flex-col items-center gap-1 text-xs font-medium transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9 9 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+      İstatistik
+    </button>
+  </div>
+</nav>
 
 <!-- CARD MODAL -->
 <div id="card-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
@@ -231,50 +313,6 @@
   </div>
 </div>
 
-<!-- CARD DETAIL MODAL -->
-<div id="card-detail-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
-  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto">
-    <div class="flex items-start justify-between mb-5">
-      <div>
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Kart Detayı</p>
-        <h3 id="card-detail-name" class="text-lg font-bold text-white"></h3>
-      </div>
-      <button onclick="closeCardDetailModal()" class="text-zinc-500 hover:text-white transition-colors text-lg leading-none">✕</button>
-    </div>
-
-    <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 mb-5">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek</p>
-      <p id="card-detail-spent" class="text-2xl font-bold text-white mb-2"></p>
-      <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
-        <span id="card-detail-limit"></span>
-        <span id="card-detail-pct"></span>
-      </div>
-      <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-        <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full"></div>
-      </div>
-    </div>
-
-    <div id="card-detail-upcoming-wrap" class="mb-5">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Gelecek Ödemeler</p>
-      <div id="card-detail-upcoming" class="space-y-2">
-        <!-- upcoming installment months render here -->
-      </div>
-    </div>
-
-    <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Harcamalar</p>
-    <div id="card-detail-list" class="space-y-4">
-      <!-- grouped expenses render here -->
-    </div>
-    <p id="card-detail-empty" class="hidden text-sm text-zinc-500 text-center py-4">
-      Bu karta ait harcama bulunmuyor.
-    </p>
-
-    <button onclick="closeCardDetailModal()" class="w-full mt-6 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">
-      Kapat
-    </button>
-  </div>
-</div>
-
 </div><!-- /app-screen -->
 
 <script>
@@ -293,15 +331,15 @@
      CONSTANTS
   --------------------------------------------------------- */
   const COLOR_PALETTE = [
-    { name: 'lime',    bg: 'bg-lime-400'   },
-    { name: 'sky',     bg: 'bg-sky-400'    },
-    { name: 'amber',   bg: 'bg-amber-400'  },
-    { name: 'pink',    bg: 'bg-pink-400'   },
-    { name: 'red',     bg: 'bg-red-400'    },
-    { name: 'purple',  bg: 'bg-purple-400' },
-    { name: 'emerald', bg: 'bg-emerald-400'},
-    { name: 'orange',  bg: 'bg-orange-400' },
-    { name: 'zinc',    bg: 'bg-zinc-500'   },
+    { name: 'lime',    bg: 'bg-lime-400',    hex: '#a3e635' },
+    { name: 'sky',     bg: 'bg-sky-400',     hex: '#38bdf8' },
+    { name: 'amber',   bg: 'bg-amber-400',   hex: '#fbbf24' },
+    { name: 'pink',    bg: 'bg-pink-400',    hex: '#f472b6' },
+    { name: 'red',     bg: 'bg-red-400',     hex: '#f87171' },
+    { name: 'purple',  bg: 'bg-purple-400',  hex: '#c084fc' },
+    { name: 'emerald', bg: 'bg-emerald-400', hex: '#34d399' },
+    { name: 'orange',  bg: 'bg-orange-400',  hex: '#fb923c' },
+    { name: 'zinc',    bg: 'bg-zinc-500',    hex: '#71717a' },
   ];
 
   const INSTALLMENT_OPTIONS = [1, 3, 6, 9, 12];
@@ -314,6 +352,8 @@
     selectedCardId: null,
     selectedInstallment: 1,
     selectedColor: COLOR_PALETTE[0].name,
+    detailCardId: null,
+    currentPage: 'home',
   };
 
   /* ---------------------------------------------------------
@@ -463,6 +503,11 @@
     return found ? found.bg : 'bg-zinc-500';
   }
 
+  function colorHex(colorName) {
+    const found = COLOR_PALETTE.find(c => c.name === colorName);
+    return found ? found.hex : '#71717a';
+  }
+
   /* ---------------------------------------------------------
      RENDER: HEADER / SUMMARY
   --------------------------------------------------------- */
@@ -487,9 +532,16 @@
       carousel.innerHTML = '';
       dots.innerHTML = '';
       empty.classList.remove('hidden');
+      document.getElementById('card-detail-wrap').classList.add('hidden');
+      state.detailCardId = null;
       return;
     }
     empty.classList.add('hidden');
+
+    // Default to first card if none selected, or if previously selected card was deleted
+    if (!state.detailCardId || !state.cards.find(c => c.id === state.detailCardId)) {
+      state.detailCardId = state.cards[0].id;
+    }
 
     carousel.classList.toggle('justify-center', state.cards.length === 1);
     carousel.classList.toggle('justify-start', state.cards.length > 1);
@@ -498,9 +550,11 @@
       const spent = getCardSpent(card.id);
       const limit = card.limit || 0;
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+      const isSelected = card.id === state.detailCardId;
+      const borderClass = isSelected ? 'border-lime-400' : 'border-zinc-800 hover:border-zinc-700';
 
       return `
-        <div onclick="openCardDetailModal('${card.id}')" class="snap-start shrink-0 w-[calc(100%-2rem)] sm:w-[320px] bg-zinc-900 border border-zinc-800 rounded-2xl p-5 relative cursor-pointer hover:border-zinc-700 transition-colors">
+        <div onclick="showCardDetail('${card.id}')" class="snap-start shrink-0 w-[calc(100%-2rem)] sm:w-[320px] bg-zinc-900 border ${borderClass} rounded-2xl p-5 relative cursor-pointer transition-colors">
           <div class="flex items-start justify-between mb-6">
             <p class="font-semibold text-white pr-2">${escapeHtml(card.name)}</p>
             <button onclick="event.stopPropagation(); deleteCard('${card.id}')" title="Kartı sil" class="w-8 h-5 rounded bg-lime-400/80 hover:bg-red-400 shrink-0 flex items-center justify-center text-zinc-950 text-xs font-bold transition-colors">
@@ -519,9 +573,13 @@
       `;
     }).join('');
 
+    const selectedIndex = state.cards.findIndex(c => c.id === state.detailCardId);
+
     dots.innerHTML = state.cards.map((card, i) => `
-      <span data-dot-index="${i}" class="w-1.5 h-1.5 rounded-full transition-colors ${i === 0 ? 'bg-lime-400' : 'bg-zinc-700'}"></span>
+      <span data-dot-index="${i}" class="w-1.5 h-1.5 rounded-full transition-colors ${i === selectedIndex ? 'bg-lime-400' : 'bg-zinc-700'}"></span>
     `).join('');
+
+    renderCardDetail();
   }
 
   // Update active dot based on horizontal scroll position
@@ -563,6 +621,93 @@
     return state.expenses
       .filter(e => e.cardId === cardId)
       .reduce((sum, e) => sum + getInstallmentPortion(e, year, month), 0);
+  }
+
+  /* ---------------------------------------------------------
+     RENDER: STATS (pie chart + category breakdown)
+  --------------------------------------------------------- */
+  function renderStats() {
+    const chartWrap = document.getElementById('stats-chart-wrap');
+    const empty = document.getElementById('stats-empty');
+    const breakdown = document.getElementById('stats-breakdown');
+    const totalEl = document.getElementById('stats-total');
+
+    // Sum total spend per category (using full expense amounts, not installment portions)
+    const totals = {};
+    let grandTotal = 0;
+
+    state.expenses.forEach(exp => {
+      const key = exp.categoryId || '__none__';
+      totals[key] = (totals[key] || 0) + exp.amount;
+      grandTotal += exp.amount;
+    });
+
+    totalEl.textContent = formatCurrency(grandTotal);
+
+    if (grandTotal === 0) {
+      chartWrap.innerHTML = '';
+      breakdown.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    // Build sorted list of categories with percentages
+    const items = Object.keys(totals).map(catId => {
+      const cat = state.categories.find(c => c.id === catId);
+      return {
+        id: catId,
+        name: cat ? cat.name : 'Diğer',
+        color: cat ? cat.color : 'zinc',
+        amount: totals[catId],
+        pct: (totals[catId] / grandTotal) * 100,
+      };
+    }).sort((a, b) => b.amount - a.amount);
+
+    // Build SVG donut chart using stroke-dasharray segments
+    const size = 200;
+    const radius = 80;
+    const circumference = 2 * Math.PI * radius;
+    let offsetAccum = 0;
+
+    const segments = items.map(item => {
+      const dash = (item.pct / 100) * circumference;
+      const seg = `
+        <circle cx="${size/2}" cy="${size/2}" r="${radius}"
+          fill="none" stroke="${colorHex(item.color)}" stroke-width="28"
+          stroke-dasharray="${dash} ${circumference - dash}"
+          stroke-dashoffset="${-offsetAccum}"
+          transform="rotate(-90 ${size/2} ${size/2})"
+        />
+      `;
+      offsetAccum += dash;
+      return seg;
+    }).join('');
+
+    chartWrap.innerHTML = `
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        ${segments}
+      </svg>
+    `;
+
+    // Breakdown list
+    breakdown.innerHTML = items.map(item => `
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="flex items-center gap-2 text-sm font-medium text-white">
+            <span class="w-2.5 h-2.5 rounded-full" style="background:${colorHex(item.color)}"></span>
+            ${escapeHtml(item.name)}
+          </span>
+          <span class="text-sm font-bold text-white">${formatCurrency(item.amount)}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+            <div class="h-full rounded-full" style="width:${item.pct}%; background:${colorHex(item.color)}"></div>
+          </div>
+          <span class="text-xs text-zinc-500 w-12 text-right">%${item.pct.toFixed(1)}</span>
+        </div>
+      </div>
+    `).join('');
   }
 
   /* ---------------------------------------------------------
@@ -755,11 +900,11 @@
     renderAll();
   }
 
-  // Delete an expense from within the card detail modal, then refresh the modal view
+  // Delete an expense from within the card detail view, then refresh
   async function deleteExpenseFromDetail(id, cardId) {
     if (!confirm('Bu harcamayı silmek istediğine emin misin?')) return;
     await deleteExpense(id);
-    openCardDetailModal(cardId);
+    renderCardDetail();
   }
 
   function showError(el, msg) {
@@ -826,37 +971,42 @@
       cardLabel.classList.remove('text-white');
     }
 
-    if (document.getElementById('card-detail-modal').dataset.cardId === id) {
-      closeCardDetailModal();
+    if (state.detailCardId === id) {
+      state.detailCardId = null;
     }
 
     renderAll();
   }
 
   /* ---------------------------------------------------------
-     ACTIONS: CARD DETAIL MODAL
+     CARD DETAIL (inline on Cards page)
   --------------------------------------------------------- */
-  function openCardDetailModal(cardId) {
-    const card = state.cards.find(c => c.id === cardId);
-    if (!card) return;
+  function showCardDetail(cardId) {
+    state.detailCardId = cardId;
+    renderCards();
+  }
 
-    const modal = document.getElementById('card-detail-modal');
-    modal.dataset.cardId = cardId;
+  function renderCardDetail() {
+    const wrap = document.getElementById('card-detail-wrap');
+    const card = state.cards.find(c => c.id === state.detailCardId);
 
-    const spent = getCardSpent(cardId);
+    if (!card) {
+      wrap.classList.add('hidden');
+      return;
+    }
+    wrap.classList.remove('hidden');
+
+    const spent = getCardSpent(card.id);
     const limit = card.limit || 0;
     const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
 
-    document.getElementById('card-detail-name').textContent = card.name;
     document.getElementById('card-detail-spent').textContent = formatCurrency(spent);
     document.getElementById('card-detail-limit').textContent = 'Limit ' + formatCurrency(limit);
     document.getElementById('card-detail-pct').textContent = '%' + Math.round(pct);
     document.getElementById('card-detail-bar').style.width = pct + '%';
 
-    renderCardUpcomingPayments(cardId);
-    renderCardDetailExpenses(cardId);
-
-    modal.classList.remove('hidden');
+    renderCardUpcomingPayments(card.id);
+    renderCardDetailExpenses(card.id);
   }
 
   // Shows, for the next 6 months, how much will be charged to this card
@@ -921,11 +1071,6 @@
         </div>
       `;
     }).join('');
-  }
-
-  function closeCardDetailModal() {
-    document.getElementById('card-detail-modal').classList.add('hidden');
-    document.getElementById('card-detail-modal').dataset.cardId = '';
   }
 
   function renderCardDetailExpenses(cardId) {
@@ -1103,6 +1248,30 @@
   /* ---------------------------------------------------------
      INIT
   --------------------------------------------------------- */
+  const PAGE_TITLES = {
+    home: 'Harcama Defteri',
+    cards: 'Kartlarım',
+    stats: 'İstatistik',
+  };
+
+  function switchPage(page) {
+    state.currentPage = page;
+
+    ['home', 'cards', 'stats'].forEach(p => {
+      document.getElementById('page-' + p).classList.toggle('hidden', p !== page);
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.nav === page);
+    });
+
+    document.getElementById('page-title').textContent = PAGE_TITLES[page];
+
+    if (page === 'stats') {
+      renderStats();
+    }
+  }
+
   function renderAll() {
     renderHeader();
     renderCards();
@@ -1110,6 +1279,9 @@
     renderCategoryDropdown();
     renderCardDropdown();
     renderInstallmentOptions();
+    if (state.currentPage === 'stats') {
+      renderStats();
+    }
   }
 
   async function init() {
@@ -1119,6 +1291,7 @@
     } else {
       showAuthScreen();
     }
+    switchPage('home');
   }
 
   // Allow Enter key to submit auth form
