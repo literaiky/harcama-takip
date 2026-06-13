@@ -491,6 +491,9 @@
     }
     empty.classList.add('hidden');
 
+    carousel.classList.toggle('justify-center', state.cards.length === 1);
+    carousel.classList.toggle('justify-start', state.cards.length > 1);
+
     carousel.innerHTML = state.cards.map(card => {
       const spent = getCardSpent(card.id);
       const limit = card.limit || 0;
