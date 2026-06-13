@@ -155,7 +155,7 @@
         </button>
       </div>
 
-      <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 -mx-1 px-1">
+      <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2">
         <!-- cards render here -->
       </div>
       <div id="cards-dots" class="flex items-center justify-center gap-1.5 mt-3">
@@ -166,7 +166,7 @@
       </p>
     </section>
 
-    <!-- SIDEBAR: Categories + Recent -->
+    <!-- SIDEBAR: Categories -->
     <div class="order-3 lg:order-3 lg:col-span-1 space-y-8">
 
       <!-- Categories -->
@@ -178,17 +178,6 @@
         <div id="categories-list" class="flex flex-wrap gap-2">
           <!-- category chips render here -->
         </div>
-      </section>
-
-      <!-- Recent Transactions -->
-      <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-        <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase mb-4">Son Harcamalar</h2>
-        <div id="recent-list" class="divide-y divide-zinc-800">
-          <!-- transactions render here -->
-        </div>
-        <p id="recent-empty" class="hidden text-sm text-zinc-500 text-center py-4">
-          Henüz harcama eklenmedi.
-        </p>
       </section>
 
     </div>
@@ -254,6 +243,7 @@
     </div>
 
     <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 mb-5">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek</p>
       <p id="card-detail-spent" class="text-2xl font-bold text-white mb-2"></p>
       <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
         <span id="card-detail-limit"></span>
@@ -261,6 +251,13 @@
       </div>
       <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
         <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full"></div>
+      </div>
+    </div>
+
+    <div id="card-detail-upcoming-wrap" class="mb-5">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Gelecek Ödemeler</p>
+      <div id="card-detail-upcoming" class="space-y-2">
+        <!-- upcoming installment months render here -->
       </div>
     </div>
 
@@ -474,7 +471,7 @@
     const now = new Date();
     document.getElementById('header-month').textContent = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
-    const total = state.expenses.reduce((sum, e) => sum + e.amount, 0);
+    const total = state.expenses.reduce((sum, e) => sum + getInstallmentPortion(e, now.getFullYear(), now.getMonth()), 0);
     document.getElementById('month-total').textContent = formatCurrency(total);
   }
 
@@ -500,7 +497,7 @@
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
 
       return `
-        <div onclick="openCardDetailModal('${card.id}')" class="snap-start shrink-0 w-[85%] sm:w-[320px] bg-zinc-900 border border-zinc-800 rounded-2xl p-5 relative cursor-pointer hover:border-zinc-700 transition-colors">
+        <div onclick="openCardDetailModal('${card.id}')" class="snap-start shrink-0 w-[calc(100%-2rem)] sm:w-[320px] bg-zinc-900 border border-zinc-800 rounded-2xl p-5 relative cursor-pointer hover:border-zinc-700 transition-colors">
           <div class="flex items-start justify-between mb-6">
             <p class="font-semibold text-white pr-2">${escapeHtml(card.name)}</p>
             <button onclick="event.stopPropagation(); deleteCard('${card.id}')" title="Kartı sil" class="w-8 h-5 rounded bg-lime-400/80 hover:bg-red-400 shrink-0 flex items-center justify-center text-zinc-950 text-xs font-bold transition-colors">
@@ -540,9 +537,29 @@
   }
 
   function getCardSpent(cardId) {
+    const now = new Date();
+    return getCardSpentForMonth(cardId, now.getFullYear(), now.getMonth());
+  }
+
+  // Returns how much of an expense falls on the given year/month (0-indexed month),
+  // accounting for installments. Returns 0 if the expense doesn't affect that month.
+  function getInstallmentPortion(expense, year, month) {
+    const expDate = new Date(expense.expenseDate + 'T00:00:00');
+    const expYear = expDate.getFullYear();
+    const expMonth = expDate.getMonth();
+
+    // Number of months between the expense's month and the target month
+    const monthDiff = (year - expYear) * 12 + (month - expMonth);
+
+    if (monthDiff < 0 || monthDiff >= expense.installment) return 0;
+
+    return expense.amount / expense.installment;
+  }
+
+  function getCardSpentForMonth(cardId, year, month) {
     return state.expenses
       .filter(e => e.cardId === cardId)
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + getInstallmentPortion(e, year, month), 0);
   }
 
   /* ---------------------------------------------------------
@@ -664,46 +681,6 @@
   }
 
   /* ---------------------------------------------------------
-     RENDER: RECENT TRANSACTIONS
-  --------------------------------------------------------- */
-  function renderRecent() {
-    const list = document.getElementById('recent-list');
-    const empty = document.getElementById('recent-empty');
-
-    const sorted = [...state.expenses].sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate));
-
-    if (sorted.length === 0) {
-      list.innerHTML = '';
-      empty.classList.remove('hidden');
-      return;
-    }
-    empty.classList.add('hidden');
-
-    list.innerHTML = sorted.slice(0, 8).map(exp => {
-      const cat = state.categories.find(c => c.id === exp.categoryId);
-      const card = state.cards.find(c => c.id === exp.cardId);
-      const catName = cat ? cat.name : 'Kategori silindi';
-      const cardName = card ? card.name : 'Kart silindi';
-      const installmentText = exp.installment > 1 ? ` · ${exp.installment} taksit` : '';
-      const titleText = exp.note ? escapeHtml(exp.note) : catName;
-      const dateLabel = formatDateLabel(exp.expenseDate);
-
-      return `
-        <div class="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-          <div>
-            <p class="text-sm font-medium text-white">${titleText}</p>
-            <p class="text-xs text-zinc-500 mt-0.5">${catName} · ${cardName}${installmentText} · ${dateLabel}</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <p class="text-sm font-bold text-white">${formatCurrency(exp.amount)}</p>
-            <button onclick="deleteExpense('${exp.id}')" title="Sil" class="text-zinc-500 hover:text-red-400 transition-colors text-sm leading-none">✕</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  /* ---------------------------------------------------------
      ACTIONS: EXPENSE FORM
   --------------------------------------------------------- */
   async function saveExpense() {
@@ -775,6 +752,13 @@
     renderAll();
   }
 
+  // Delete an expense from within the card detail modal, then refresh the modal view
+  async function deleteExpenseFromDetail(id, cardId) {
+    if (!confirm('Bu harcamayı silmek istediğine emin misin?')) return;
+    await deleteExpense(id);
+    openCardDetailModal(cardId);
+  }
+
   function showError(el, msg) {
     el.textContent = msg;
     el.classList.remove('hidden');
@@ -819,13 +803,17 @@
   }
 
   async function deleteCard(id) {
-    if (!confirm('Bu kartı silmek istediğine emin misin? Bu karta bağlı harcamalar listede kalır ancak "Kart silindi" olarak görünür.')) return;
+    if (!confirm('Bu kartı silmek istediğine emin misin? Bu karta bağlı tüm harcamalar da silinecek.')) return;
+
+    // Delete all expenses linked to this card first
+    const { error: expError } = await supabaseClient.from('expenses').delete().eq('card_id', id);
+    if (expError) { alert('Harcamalar silinemedi: ' + expError.message); return; }
 
     const { error } = await supabaseClient.from('cards').delete().eq('id', id);
     if (error) { alert('Silinemedi: ' + error.message); return; }
 
     state.cards = state.cards.filter(c => c.id !== id);
-    state.expenses.forEach(e => { if (e.cardId === id) e.cardId = null; });
+    state.expenses = state.expenses.filter(e => e.cardId !== id);
 
     if (state.selectedCardId === id) {
       state.selectedCardId = null;
@@ -862,9 +850,74 @@
     document.getElementById('card-detail-pct').textContent = '%' + Math.round(pct);
     document.getElementById('card-detail-bar').style.width = pct + '%';
 
+    renderCardUpcomingPayments(cardId);
     renderCardDetailExpenses(cardId);
 
     modal.classList.remove('hidden');
+  }
+
+  // Shows, for the next 6 months, how much will be charged to this card
+  // from currently active installment plans (e.g. "Ağustos 2026: 2/3 taksit · ₺1.000,00")
+  function renderCardUpcomingPayments(cardId) {
+    const wrap = document.getElementById('card-detail-upcoming-wrap');
+    const container = document.getElementById('card-detail-upcoming');
+    const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+    const cardExpenses = state.expenses.filter(e => e.cardId === cardId && e.installment > 1);
+
+    const now = new Date();
+    const rows = [];
+
+    for (let offset = 1; offset <= 6; offset++) {
+      const targetDate = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      const year = targetDate.getFullYear();
+      const month = targetDate.getMonth();
+
+      let monthTotal = 0;
+      const items = [];
+
+      cardExpenses.forEach(exp => {
+        const portion = getInstallmentPortion(exp, year, month);
+        if (portion > 0) {
+          const expDate = new Date(exp.expenseDate + 'T00:00:00');
+          const monthDiff = (year - expDate.getFullYear()) * 12 + (month - expDate.getMonth());
+          const installmentNo = monthDiff + 1; // 1-indexed
+          const cat = state.categories.find(c => c.id === exp.categoryId);
+          const label = exp.note ? escapeHtml(exp.note) : (cat ? cat.name : 'Kategori silindi');
+          items.push({ label, installmentNo, total: exp.installment, portion });
+          monthTotal += portion;
+        }
+      });
+
+      if (monthTotal > 0) {
+        rows.push({ year, month, monthTotal, items });
+      }
+    }
+
+    if (rows.length === 0) {
+      wrap.classList.add('hidden');
+      return;
+    }
+    wrap.classList.remove('hidden');
+
+    container.innerHTML = rows.map(row => {
+      const itemsHtml = row.items.map(item => `
+        <div class="flex items-center justify-between text-xs text-zinc-400">
+          <span>${item.label} · ${item.installmentNo}/${item.total} taksit</span>
+          <span class="tabular">${formatCurrency(item.portion)}</span>
+        </div>
+      `).join('');
+
+      return `
+        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-1.5">
+            <p class="text-sm font-semibold text-white">${monthNames[row.month]} ${row.year}</p>
+            <p class="text-sm font-bold text-lime-400">${formatCurrency(row.monthTotal)}</p>
+          </div>
+          <div class="space-y-1">${itemsHtml}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   function closeCardDetailModal() {
@@ -904,16 +957,26 @@
       const rows = dayExpenses.map(exp => {
         const cat = state.categories.find(c => c.id === exp.categoryId);
         const catName = cat ? cat.name : 'Kategori silindi';
-        const installmentText = exp.installment > 1 ? ` · ${exp.installment} taksit` : '';
         const titleText = exp.note ? escapeHtml(exp.note) : catName;
 
+        let installmentText = '';
+        let amountDisplay = formatCurrency(exp.amount);
+        if (exp.installment > 1) {
+          const monthly = exp.amount / exp.installment;
+          installmentText = ` · ${exp.installment} taksit`;
+          amountDisplay = `${formatCurrency(exp.amount)} <span class="text-zinc-500 font-normal">(${formatCurrency(monthly)}/ay)</span>`;
+        }
+
         return `
-          <div class="flex items-center justify-between py-2">
+          <div class="flex items-center justify-between gap-3 py-2">
             <div>
               <p class="text-sm font-medium text-white">${titleText}</p>
               <p class="text-xs text-zinc-500 mt-0.5">${catName}${installmentText}</p>
             </div>
-            <p class="text-sm font-bold text-white">${formatCurrency(exp.amount)}</p>
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-bold text-white text-right">${amountDisplay}</p>
+              <button onclick="deleteExpenseFromDetail('${exp.id}', '${cardId}')" title="Sil" class="text-zinc-500 hover:text-red-400 transition-colors text-sm leading-none">✕</button>
+            </div>
           </div>
         `;
       }).join('');
@@ -1044,7 +1107,6 @@
     renderCategoryDropdown();
     renderCardDropdown();
     renderInstallmentOptions();
-    renderRecent();
   }
 
   async function init() {
