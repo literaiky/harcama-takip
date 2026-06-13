@@ -78,12 +78,20 @@
 
       <div class="space-y-4">
 
-        <!-- Amount -->
-        <div>
-          <label class="block text-xs font-medium text-zinc-400 mb-2">Tutar</label>
-          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
-            <span class="text-lg font-bold text-zinc-500 mr-2">₺</span>
-            <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-lg font-bold text-white placeholder-zinc-600 focus:outline-none">
+        <!-- Amount & Date -->
+        <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-4">
+          <div>
+            <label class="block text-xs font-medium text-zinc-400 mb-2">Tutar</label>
+            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
+              <span class="text-lg font-bold text-zinc-500 mr-2">₺</span>
+              <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-lg font-bold text-white placeholder-zinc-600 focus:outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-zinc-400 mb-2">Tarih</label>
+            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors h-[52px]">
+              <input type="date" id="date-input" class="bg-transparent text-sm font-medium text-white focus:outline-none [color-scheme:dark]">
+            </div>
           </div>
         </div>
 
@@ -138,7 +146,7 @@
       </div>
     </section>
 
-    <!-- CARDS GRID -->
+    <!-- CARDS CAROUSEL -->
     <section class="order-2 lg:order-1 lg:col-span-3">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kartlarım</h2>
@@ -147,8 +155,11 @@
         </button>
       </div>
 
-      <div id="cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 -mx-1 px-1">
         <!-- cards render here -->
+      </div>
+      <div id="cards-dots" class="flex items-center justify-center gap-1.5 mt-3">
+        <!-- dots render here -->
       </div>
       <p id="cards-empty" class="hidden text-sm text-zinc-500 bg-zinc-900 border border-dashed border-zinc-800 rounded-2xl p-6 text-center">
         Henüz kart eklenmedi. "Kart Ekle" ile başlayabilirsin.
@@ -228,6 +239,42 @@
       <button onclick="closeCategoryModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">Vazgeç</button>
       <button onclick="addCategory()" class="flex-1 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">Ekle</button>
     </div>
+  </div>
+</div>
+
+<!-- CARD DETAIL MODAL -->
+<div id="card-detail-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
+  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md max-h-[85vh] overflow-y-auto">
+    <div class="flex items-start justify-between mb-5">
+      <div>
+        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Kart Detayı</p>
+        <h3 id="card-detail-name" class="text-lg font-bold text-white"></h3>
+      </div>
+      <button onclick="closeCardDetailModal()" class="text-zinc-500 hover:text-white transition-colors text-lg leading-none">✕</button>
+    </div>
+
+    <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-4 mb-5">
+      <p id="card-detail-spent" class="text-2xl font-bold text-white mb-2"></p>
+      <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
+        <span id="card-detail-limit"></span>
+        <span id="card-detail-pct"></span>
+      </div>
+      <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+        <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full"></div>
+      </div>
+    </div>
+
+    <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Harcamalar</p>
+    <div id="card-detail-list" class="space-y-4">
+      <!-- grouped expenses render here -->
+    </div>
+    <p id="card-detail-empty" class="hidden text-sm text-zinc-500 text-center py-4">
+      Bu karta ait harcama bulunmuyor.
+    </p>
+
+    <button onclick="closeCardDetailModal()" class="w-full mt-6 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">
+      Kapat
+    </button>
   </div>
 </div>
 
@@ -368,7 +415,7 @@
     const [cardsRes, categoriesRes, expensesRes] = await Promise.all([
       supabaseClient.from('cards').select('*').order('created_at', { ascending: true }),
       supabaseClient.from('categories').select('*').order('created_at', { ascending: true }),
-      supabaseClient.from('expenses').select('*').order('created_at', { ascending: false }),
+      supabaseClient.from('expenses').select('*').order('expense_date', { ascending: false }),
     ]);
 
     state.cards = (cardsRes.data || []).map(c => ({ id: c.id, name: c.name, limit: Number(c.card_limit) }));
@@ -381,6 +428,7 @@
       installment: e.installment,
       note: e.note || '',
       date: e.created_at,
+      expenseDate: e.expense_date,
     }));
   }
 
@@ -434,26 +482,28 @@
      RENDER: CARDS
   --------------------------------------------------------- */
   function renderCards() {
-    const grid = document.getElementById('cards-grid');
+    const carousel = document.getElementById('cards-carousel');
+    const dots = document.getElementById('cards-dots');
     const empty = document.getElementById('cards-empty');
 
     if (state.cards.length === 0) {
-      grid.innerHTML = '';
+      carousel.innerHTML = '';
+      dots.innerHTML = '';
       empty.classList.remove('hidden');
       return;
     }
     empty.classList.add('hidden');
 
-    grid.innerHTML = state.cards.map(card => {
+    carousel.innerHTML = state.cards.map(card => {
       const spent = getCardSpent(card.id);
       const limit = card.limit || 0;
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
 
       return `
-        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 relative">
+        <div onclick="openCardDetailModal('${card.id}')" class="snap-start shrink-0 w-[85%] sm:w-[320px] bg-zinc-900 border border-zinc-800 rounded-2xl p-5 relative cursor-pointer hover:border-zinc-700 transition-colors">
           <div class="flex items-start justify-between mb-6">
             <p class="font-semibold text-white pr-2">${escapeHtml(card.name)}</p>
-            <button onclick="deleteCard('${card.id}')" title="Kartı sil" class="w-8 h-5 rounded bg-lime-400/80 hover:bg-red-400 shrink-0 flex items-center justify-center text-zinc-950 text-xs font-bold transition-colors">
+            <button onclick="event.stopPropagation(); deleteCard('${card.id}')" title="Kartı sil" class="w-8 h-5 rounded bg-lime-400/80 hover:bg-red-400 shrink-0 flex items-center justify-center text-zinc-950 text-xs font-bold transition-colors">
               ✕
             </button>
           </div>
@@ -468,6 +518,25 @@
         </div>
       `;
     }).join('');
+
+    dots.innerHTML = state.cards.map((card, i) => `
+      <span data-dot-index="${i}" class="w-1.5 h-1.5 rounded-full transition-colors ${i === 0 ? 'bg-lime-400' : 'bg-zinc-700'}"></span>
+    `).join('');
+  }
+
+  // Update active dot based on horizontal scroll position
+  function onCardsScroll() {
+    const carousel = document.getElementById('cards-carousel');
+    const dots = document.getElementById('cards-dots').children;
+    if (dots.length === 0) return;
+
+    const cardWidth = carousel.firstElementChild ? carousel.firstElementChild.offsetWidth + 16 : 1; // +gap
+    const activeIndex = Math.round(carousel.scrollLeft / cardWidth);
+
+    Array.from(dots).forEach((dot, i) => {
+      dot.classList.toggle('bg-lime-400', i === activeIndex);
+      dot.classList.toggle('bg-zinc-700', i !== activeIndex);
+    });
   }
 
   function getCardSpent(cardId) {
@@ -601,7 +670,7 @@
     const list = document.getElementById('recent-list');
     const empty = document.getElementById('recent-empty');
 
-    const sorted = [...state.expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...state.expenses].sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate));
 
     if (sorted.length === 0) {
       list.innerHTML = '';
@@ -617,12 +686,13 @@
       const cardName = card ? card.name : 'Kart silindi';
       const installmentText = exp.installment > 1 ? ` · ${exp.installment} taksit` : '';
       const titleText = exp.note ? escapeHtml(exp.note) : catName;
+      const dateLabel = formatDateLabel(exp.expenseDate);
 
       return `
         <div class="flex items-center justify-between py-3 first:pt-0 last:pb-0">
           <div>
             <p class="text-sm font-medium text-white">${titleText}</p>
-            <p class="text-xs text-zinc-500 mt-0.5">${catName} · ${cardName}${installmentText}</p>
+            <p class="text-xs text-zinc-500 mt-0.5">${catName} · ${cardName}${installmentText} · ${dateLabel}</p>
           </div>
           <div class="flex items-center gap-3">
             <p class="text-sm font-bold text-white">${formatCurrency(exp.amount)}</p>
@@ -653,6 +723,7 @@
       return showError(errorEl, 'Lütfen bir kart seç.');
     }
 
+    const dateValue = document.getElementById('date-input').value || todayDateString();
     const note = document.getElementById('note-input').value.trim();
 
     const { data, error } = await supabaseClient.from('expenses').insert({
@@ -662,13 +733,14 @@
       card_id: state.selectedCardId,
       installment: state.selectedInstallment,
       note: note,
+      expense_date: dateValue,
     }).select().single();
 
     if (error) {
       return showError(errorEl, 'Kaydedilemedi: ' + error.message);
     }
 
-    state.expenses.unshift({
+    state.expenses.push({
       id: data.id,
       amount: Number(data.amount),
       categoryId: data.category_id,
@@ -676,11 +748,14 @@
       installment: data.installment,
       note: data.note || '',
       date: data.created_at,
+      expenseDate: data.expense_date,
     });
+    state.expenses.sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate));
 
     // Reset form
     document.getElementById('amount-input').value = '';
     document.getElementById('note-input').value = '';
+    document.getElementById('date-input').value = todayDateString();
     state.selectedCategoryId = null;
     state.selectedCardId = null;
     state.selectedInstallment = 1;
@@ -759,7 +834,117 @@
       cardLabel.classList.add('text-zinc-500');
       cardLabel.classList.remove('text-white');
     }
+
+    if (document.getElementById('card-detail-modal').dataset.cardId === id) {
+      closeCardDetailModal();
+    }
+
     renderAll();
+  }
+
+  /* ---------------------------------------------------------
+     ACTIONS: CARD DETAIL MODAL
+  --------------------------------------------------------- */
+  function openCardDetailModal(cardId) {
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) return;
+
+    const modal = document.getElementById('card-detail-modal');
+    modal.dataset.cardId = cardId;
+
+    const spent = getCardSpent(cardId);
+    const limit = card.limit || 0;
+    const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+
+    document.getElementById('card-detail-name').textContent = card.name;
+    document.getElementById('card-detail-spent').textContent = formatCurrency(spent);
+    document.getElementById('card-detail-limit').textContent = 'Limit ' + formatCurrency(limit);
+    document.getElementById('card-detail-pct').textContent = '%' + Math.round(pct);
+    document.getElementById('card-detail-bar').style.width = pct + '%';
+
+    renderCardDetailExpenses(cardId);
+
+    modal.classList.remove('hidden');
+  }
+
+  function closeCardDetailModal() {
+    document.getElementById('card-detail-modal').classList.add('hidden');
+    document.getElementById('card-detail-modal').dataset.cardId = '';
+  }
+
+  function renderCardDetailExpenses(cardId) {
+    const list = document.getElementById('card-detail-list');
+    const empty = document.getElementById('card-detail-empty');
+
+    const cardExpenses = state.expenses
+      .filter(e => e.cardId === cardId)
+      .sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate));
+
+    if (cardExpenses.length === 0) {
+      list.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    // Group by date (YYYY-MM-DD)
+    const groups = {};
+    cardExpenses.forEach(e => {
+      const key = e.expenseDate;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(e);
+    });
+
+    const sortedDates = Object.keys(groups).sort((a, b) => new Date(b) - new Date(a));
+
+    list.innerHTML = sortedDates.map(dateKey => {
+      const dayExpenses = groups[dateKey];
+      const dayTotal = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+      const rows = dayExpenses.map(exp => {
+        const cat = state.categories.find(c => c.id === exp.categoryId);
+        const catName = cat ? cat.name : 'Kategori silindi';
+        const installmentText = exp.installment > 1 ? ` · ${exp.installment} taksit` : '';
+        const titleText = exp.note ? escapeHtml(exp.note) : catName;
+
+        return `
+          <div class="flex items-center justify-between py-2">
+            <div>
+              <p class="text-sm font-medium text-white">${titleText}</p>
+              <p class="text-xs text-zinc-500 mt-0.5">${catName}${installmentText}</p>
+            </div>
+            <p class="text-sm font-bold text-white">${formatCurrency(exp.amount)}</p>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <p class="text-xs font-semibold text-zinc-400">${formatDateLabel(dateKey)}</p>
+            <p class="text-xs font-semibold text-zinc-400">${formatCurrency(dayTotal)}</p>
+          </div>
+          <div class="divide-y divide-zinc-800 border-t border-zinc-800">
+            ${rows}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatDateLabel(dateStr) {
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    const isSameDay = (a, b) => a.toDateString() === b.toDateString();
+
+    if (isSameDay(date, today)) return 'Bugün';
+    if (isSameDay(date, yesterday)) return 'Dün';
+
+    const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+    return `${date.getDate()} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
   }
 
   /* ---------------------------------------------------------
@@ -841,6 +1026,14 @@
     return div.innerHTML;
   }
 
+  function todayDateString() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
   /* ---------------------------------------------------------
      INIT
   --------------------------------------------------------- */
@@ -870,6 +1063,8 @@
         if (e.key === 'Enter') handleAuthSubmit();
       });
     });
+    document.getElementById('date-input').value = todayDateString();
+    document.getElementById('date-input').max = todayDateString();
   });
 
   init();
