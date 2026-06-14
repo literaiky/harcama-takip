@@ -227,9 +227,13 @@
             <!-- chips render here -->
           </div>
           <div id="installment-custom-wrap" class="hidden mt-2">
-            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors">
-              <span class="text-xs font-medium text-zinc-500 mr-2">Taksit Sayısı</span>
-              <input type="number" inputmode="numeric" min="2" max="99" id="installment-custom-input" oninput="onCustomInstallmentInput(this.value)" class="w-full bg-transparent text-sm font-bold text-white text-right focus:outline-none [color-scheme:dark]">
+            <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5">
+              <span class="text-xs font-medium text-zinc-400">Taksit Sayısı</span>
+              <div class="flex items-center gap-3">
+                <button type="button" onclick="adjustCustomInstallment(-1)" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-white text-lg font-bold flex items-center justify-center transition-colors leading-none">−</button>
+                <span id="installment-custom-value" class="text-base font-bold text-white w-8 text-center tabular-nums">2</span>
+                <button type="button" onclick="adjustCustomInstallment(1)" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-white text-lg font-bold flex items-center justify-center transition-colors leading-none">+</button>
+              </div>
             </div>
           </div>
         </div>
@@ -532,9 +536,13 @@
           <!-- chips render here -->
         </div>
         <div id="edit-installment-custom-wrap" class="hidden mt-2">
-          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors">
-            <span class="text-xs font-medium text-zinc-500 mr-2">Taksit Sayısı</span>
-            <input type="number" inputmode="numeric" min="2" max="99" id="edit-installment-custom-input" oninput="onEditCustomInstallmentInput(this.value)" class="w-full bg-transparent text-sm font-bold text-white text-right focus:outline-none [color-scheme:dark]">
+          <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5">
+            <span class="text-xs font-medium text-zinc-400">Taksit Sayısı</span>
+            <div class="flex items-center gap-3">
+              <button type="button" onclick="adjustEditCustomInstallment(-1)" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-white text-lg font-bold flex items-center justify-center transition-colors leading-none">−</button>
+              <span id="edit-installment-custom-value" class="text-base font-bold text-white w-8 text-center tabular-nums">2</span>
+              <button type="button" onclick="adjustEditCustomInstallment(1)" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-white text-lg font-bold flex items-center justify-center transition-colors leading-none">+</button>
+            </div>
           </div>
         </div>
       </div>
@@ -1201,9 +1209,9 @@
     const customWrap = document.getElementById('installment-custom-wrap');
     if (customWrap) {
       customWrap.classList.toggle('hidden', !isCustom);
-      const input = document.getElementById('installment-custom-input');
-      if (isCustom && input && Number(input.value) !== state.selectedInstallment) {
-        input.value = state.selectedInstallment;
+      const valueEl = document.getElementById('installment-custom-value');
+      if (isCustom && valueEl) {
+        valueEl.textContent = state.selectedInstallment;
       }
     }
   }
@@ -1217,16 +1225,14 @@
     if (!INSTALLMENT_OPTIONS.includes(state.selectedInstallment)) return; // already custom
     state.selectedInstallment = 2; // sensible starting value not in the quick list
     renderInstallmentOptions();
-    const input = document.getElementById('installment-custom-input');
-    if (input) { input.value = state.selectedInstallment; input.focus(); input.select(); }
   }
 
-  function onCustomInstallmentInput(value) {
-    let n = parseInt(value, 10);
-    if (isNaN(n) || n < 2) n = 2;
+  function adjustCustomInstallment(delta) {
+    let n = state.selectedInstallment + delta;
+    if (n < 2) n = 2;
     if (n > 99) n = 99;
     state.selectedInstallment = n;
-    // Refresh chip label without losing focus on the input
+    document.getElementById('installment-custom-value').textContent = n;
     const chip = document.querySelector('#installment-options button:last-child');
     if (chip) chip.textContent = `${n} Taksit`;
   }
@@ -1397,9 +1403,9 @@
     const customWrap = document.getElementById('edit-installment-custom-wrap');
     if (customWrap) {
       customWrap.classList.toggle('hidden', !isCustom);
-      const input = document.getElementById('edit-installment-custom-input');
-      if (isCustom && input && Number(input.value) !== editSelectedInstallment) {
-        input.value = editSelectedInstallment;
+      const valueEl = document.getElementById('edit-installment-custom-value');
+      if (isCustom && valueEl) {
+        valueEl.textContent = editSelectedInstallment;
       }
     }
   }
@@ -1413,15 +1419,14 @@
     if (!INSTALLMENT_OPTIONS.includes(editSelectedInstallment)) return; // already custom
     editSelectedInstallment = 2;
     renderEditInstallmentOptions();
-    const input = document.getElementById('edit-installment-custom-input');
-    if (input) { input.value = editSelectedInstallment; input.focus(); input.select(); }
   }
 
-  function onEditCustomInstallmentInput(value) {
-    let n = parseInt(value, 10);
-    if (isNaN(n) || n < 2) n = 2;
+  function adjustEditCustomInstallment(delta) {
+    let n = editSelectedInstallment + delta;
+    if (n < 2) n = 2;
     if (n > 99) n = 99;
     editSelectedInstallment = n;
+    document.getElementById('edit-installment-custom-value').textContent = n;
     const chip = document.querySelector('#edit-installment-options button:last-child');
     if (chip) chip.textContent = `${n} Taksit`;
   }
