@@ -1025,8 +1025,10 @@
     const cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
 
     const toDelete = state.expenses.filter(exp => {
-      if (exp.isRecurring) return false;
       const expDate = new Date(exp.expenseDate + 'T00:00:00');
+      if (exp.isRecurring) {
+        return expDate < cutoff;
+      }
       const lastInstMonth = new Date(expDate.getFullYear(), expDate.getMonth() + exp.installment - 1, 1);
       return lastInstMonth < cutoff;
     });
