@@ -164,7 +164,7 @@
     <button onclick="toggleSpendHistory()" class="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl px-4 py-4 mb-3 flex items-center justify-between transition-colors">
       <div class="flex items-center gap-3 text-left">
         <div class="w-10 h-10 rounded-xl bg-lime-400/10 flex items-center justify-center shrink-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h2m4 0h4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
         </div>
         <div>
           <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Bu Ay Ödenecek</p>
@@ -224,6 +224,10 @@
         <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
           <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full"></div>
         </div>
+        <div id="card-detail-statement" class="hidden items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800 text-xs text-zinc-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <span id="card-detail-statement-text"></span>
+        </div>
       </div>
 
       <!-- Upcoming payments: collapsed by default, single summary line -->
@@ -274,12 +278,12 @@
       <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Toplam Harcama</p>
       <p id="stats-total" class="text-2xl font-bold text-white mb-5">₺0,00</p>
 
-      <div class="flex flex-col sm:flex-row items-center gap-6">
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
         <div id="stats-chart-wrap" class="flex items-center justify-center shrink-0">
-          <!-- SVG pie chart renders here -->
+          <!-- SVG pie chart (with labels around it) renders here -->
         </div>
-        <div id="stats-legend" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <!-- legend chips render here -->
+        <div id="stats-legend" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 empty:hidden">
+          <!-- legend chips for small slices render here -->
         </div>
       </div>
       <p id="stats-empty" class="hidden text-sm text-zinc-500 text-center py-4">
@@ -355,7 +359,7 @@
 <!-- CARD MODAL -->
 <div id="card-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
   <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm">
-    <h3 class="text-lg font-bold mb-4">Yeni Kart Ekle</h3>
+    <h3 id="card-modal-title" class="text-lg font-bold mb-4">Yeni Kart Ekle</h3>
     <div class="space-y-4">
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kart Adı</label>
@@ -365,11 +369,21 @@
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kart Limiti (₺)</label>
         <input type="text" inputmode="decimal" id="card-limit-input" placeholder="örn. 15000" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Hesap Kesim Tarihi <span class="text-zinc-600">(opsiyonel, ayın günü)</span></label>
+        <select id="card-statement-day-input" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors [color-scheme:dark]">
+          <option value="">Belirtilmedi</option>
+          <!-- 1-31 options render here -->
+        </select>
+      </div>
       <p id="card-modal-error" class="hidden text-xs font-medium text-red-400"></p>
     </div>
     <div class="flex gap-3 mt-6">
+      <button id="card-modal-delete-btn" onclick="deleteCardFromModal()" title="Kartı sil" class="hidden w-12 bg-zinc-800 hover:bg-red-400 hover:text-zinc-950 text-white font-semibold rounded-xl py-3 transition-colors items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+      </button>
       <button onclick="closeCardModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">Vazgeç</button>
-      <button onclick="addCard()" class="flex-1 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">Ekle</button>
+      <button id="card-modal-submit-btn" onclick="addCard()" class="flex-1 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">Ekle</button>
     </div>
   </div>
 </div>
@@ -607,7 +621,7 @@
       supabaseClient.from('expenses').select('*').order('expense_date', { ascending: false }),
     ]);
 
-    state.cards = (cardsRes.data || []).map(c => ({ id: c.id, name: c.name, limit: Number(c.card_limit) }));
+    state.cards = (cardsRes.data || []).map(c => ({ id: c.id, name: c.name, limit: Number(c.card_limit), statementDay: c.statement_day || null }));
     state.categories = (categoriesRes.data || []).map(c => ({ id: c.id, name: c.name, color: c.color, isDefault: !!c.is_default }));
     state.expenses = (expensesRes.data || []).map(e => ({
       id: e.id,
@@ -733,13 +747,14 @@
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
       const isSelected = card.id === state.detailCardId;
       const borderClass = isSelected ? 'border-lime-400' : 'border-zinc-800 hover:border-zinc-700';
+      const statementInfo = getStatementCountdownText(card.statementDay);
 
       return `
         <div data-card-id="${card.id}" onclick="showCardDetail('${card.id}')" class="snap-center shrink-0 w-full sm:w-[320px] bg-zinc-900 border ${borderClass} rounded-2xl p-5 relative cursor-pointer transition-colors">
           <div class="flex items-start justify-between mb-6">
             <p class="font-semibold text-white pr-2">${escapeHtml(card.name)}</p>
-            <button onclick="event.stopPropagation(); deleteCard('${card.id}')" title="Kartı sil" class="w-8 h-5 rounded bg-lime-400/80 hover:bg-red-400 shrink-0 flex items-center justify-center text-zinc-950 text-xs font-bold transition-colors">
-              ✕
+            <button onclick="event.stopPropagation(); openCardEditModal('${card.id}')" title="Kartı düzenle" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-lime-400 hover:text-zinc-950 shrink-0 flex items-center justify-center text-zinc-300 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             </button>
           </div>
           <p class="text-xl font-bold text-white mb-2">${formatCurrency(spent)}</p>
@@ -750,6 +765,12 @@
           <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
             <div class="h-full bg-lime-400 rounded-full" style="width: ${pct}%"></div>
           </div>
+          ${statementInfo ? `
+            <div class="flex items-center gap-1.5 mt-3 text-xs text-zinc-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              ${statementInfo}
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -837,6 +858,37 @@
       .reduce((sum, e) => sum + getInstallmentPortion(e, year, month), 0);
   }
 
+  // Returns a short Turkish string describing how many days remain until the
+  // card's next statement date (hesap kesim tarihi), or '' if not set.
+  // e.g. "Hesap kesimine 5 gün", "Hesap kesimi bugün", "Hesap kesimi yarın"
+  function getStatementCountdownText(statementDay) {
+    if (!statementDay) return '';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const clampDay = (year, month, day) => {
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      return Math.min(day, lastDay);
+    };
+
+    // Try this month's statement date first
+    let target = new Date(today.getFullYear(), today.getMonth(), clampDay(today.getFullYear(), today.getMonth(), statementDay));
+    if (target < today) {
+      // Already passed this month -> next month
+      const nextMonth = today.getMonth() + 1;
+      const year = today.getFullYear() + (nextMonth > 11 ? 1 : 0);
+      const month = nextMonth % 12;
+      target = new Date(year, month, clampDay(year, month, statementDay));
+    }
+
+    const diffDays = Math.round((target - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Hesap kesimi bugün';
+    if (diffDays === 1) return 'Hesap kesimine 1 gün';
+    return `Hesap kesimine ${diffDays} gün`;
+  }
+
   /* ---------------------------------------------------------
      RENDER: STATS (pie chart + category breakdown)
   --------------------------------------------------------- */
@@ -880,40 +932,77 @@
       };
     }).sort((a, b) => b.amount - a.amount);
 
-    // Build SVG donut chart using stroke-dasharray segments
-    const size = 200;
+    // Build SVG donut chart with category + percentage labels placed
+    // around the ring at each segment's midpoint angle.
     const radius = 80;
+    const strokeWidth = 28;
     const circumference = 2 * Math.PI * radius;
+    const labelRadius = radius + strokeWidth / 2 + 34; // distance of label center from chart center
+    const center = radius + strokeWidth / 2 + 44;      // chart center coords, leaves room for labels
+    const size = center * 2;
+
     let offsetAccum = 0;
 
     const segments = items.map(item => {
       const dash = (item.pct / 100) * circumference;
       const seg = `
-        <circle cx="${size/2}" cy="${size/2}" r="${radius}"
-          fill="none" stroke="${colorHex(item.color)}" stroke-width="28"
+        <circle cx="${center}" cy="${center}" r="${radius}"
+          fill="none" stroke="${colorHex(item.color)}" stroke-width="${strokeWidth}"
           stroke-dasharray="${dash} ${circumference - dash}"
           stroke-dashoffset="${-offsetAccum}"
-          transform="rotate(-90 ${size/2} ${size/2})"
+          transform="rotate(-90 ${center} ${center})"
         />
       `;
       offsetAccum += dash;
       return seg;
     }).join('');
 
+    // Only place a label around the ring for slices big enough to fit one
+    // (small slivers would overlap); the rest stay in the list below.
+    const MIN_PCT_FOR_RING_LABEL = 6;
+    let labelOffsetAccum = 0;
+    const labels = items.map(item => {
+      const startAngle = (labelOffsetAccum / circumference) * 360;
+      const sweepAngle = (item.pct / 100) * 360;
+      const midAngleDeg = startAngle + sweepAngle / 2 - 90; // -90 to start at top, matches chart rotation
+      labelOffsetAccum += (item.pct / 100) * circumference;
+
+      if (item.pct < MIN_PCT_FOR_RING_LABEL) return '';
+
+      const midAngleRad = (midAngleDeg * Math.PI) / 180;
+      const lx = center + labelRadius * Math.cos(midAngleRad);
+      const ly = center + labelRadius * Math.sin(midAngleRad);
+
+      const name = item.name.length > 10 ? item.name.slice(0, 9) + '…' : item.name;
+
+      return `
+        <g transform="translate(${lx} ${ly})">
+          <text text-anchor="middle" dy="-3" font-size="10" font-weight="700" fill="${colorHex(item.color)}">%${item.pct.toFixed(1)}</text>
+          <text text-anchor="middle" dy="10" font-size="9" font-weight="500" fill="#a1a1aa">${escapeHtml(name)}</text>
+        </g>
+      `;
+    }).join('');
+
     chartWrap.innerHTML = `
       <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
         ${segments}
+        ${labels}
       </svg>
     `;
 
-    // Legend: colored swatch + category name + percentage, next to the chart
-    legend.innerHTML = items.map(item => `
-      <div class="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2">
-        <span class="w-3 h-3 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
-        <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
-        <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
-      </div>
-    `).join('');
+    // Legend: remaining (small) slices that didn't fit a label around the ring
+    const smallItems = items.filter(item => item.pct < MIN_PCT_FOR_RING_LABEL);
+    if (smallItems.length > 0) {
+      legend.innerHTML = smallItems.map(item => `
+        <div class="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2">
+          <span class="w-3 h-3 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
+          <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
+          <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
+        </div>
+      `).join('');
+    } else {
+      legend.innerHTML = '';
+    }
 
     // Breakdown list
     breakdown.innerHTML = items.map(item => `
@@ -1353,16 +1442,52 @@
   }
 
   /* ---------------------------------------------------------
-     ACTIONS: CARD MODAL
+     ACTIONS: CARD MODAL (add + edit)
   --------------------------------------------------------- */
+  let editingCardId = null;
+
+  function populateStatementDayOptions() {
+    const select = document.getElementById('card-statement-day-input');
+    let optionsHtml = '<option value="">Belirtilmedi</option>';
+    for (let d = 1; d <= 31; d++) {
+      optionsHtml += `<option value="${d}">${d}</option>`;
+    }
+    select.innerHTML = optionsHtml;
+  }
+
   function openCardModal() {
+    editingCardId = null;
+    document.getElementById('card-modal-title').textContent = 'Yeni Kart Ekle';
     document.getElementById('card-name-input').value = '';
     document.getElementById('card-limit-input').value = '';
+    populateStatementDayOptions();
+    document.getElementById('card-statement-day-input').value = '';
     document.getElementById('card-modal-error').classList.add('hidden');
+    document.getElementById('card-modal-delete-btn').classList.add('hidden');
+    document.getElementById('card-modal-delete-btn').classList.remove('flex');
+    document.getElementById('card-modal-submit-btn').textContent = 'Ekle';
+    document.getElementById('card-modal').classList.remove('hidden');
+  }
+
+  function openCardEditModal(cardId) {
+    const card = state.cards.find(c => c.id === cardId);
+    if (!card) return;
+
+    editingCardId = cardId;
+    document.getElementById('card-modal-title').textContent = 'Kartı Düzenle';
+    document.getElementById('card-name-input').value = card.name;
+    document.getElementById('card-limit-input').value = String(card.limit).replace('.', ',');
+    populateStatementDayOptions();
+    document.getElementById('card-statement-day-input').value = card.statementDay || '';
+    document.getElementById('card-modal-error').classList.add('hidden');
+    document.getElementById('card-modal-delete-btn').classList.remove('hidden');
+    document.getElementById('card-modal-delete-btn').classList.add('flex');
+    document.getElementById('card-modal-submit-btn').textContent = 'Kaydet';
     document.getElementById('card-modal').classList.remove('hidden');
   }
 
   function closeCardModal() {
+    editingCardId = null;
     document.getElementById('card-modal').classList.add('hidden');
   }
 
@@ -1373,32 +1498,65 @@
     const name = document.getElementById('card-name-input').value.trim();
     const rawLimit = document.getElementById('card-limit-input').value.trim();
     const limit = parseFloat(rawLimit.replace(',', '.'));
+    const statementDayRaw = document.getElementById('card-statement-day-input').value;
+    const statementDay = statementDayRaw ? parseInt(statementDayRaw, 10) : null;
 
     if (!name) return showError(errorEl, 'Lütfen kart adı gir.');
     if (!rawLimit || isNaN(limit) || limit <= 0) return showError(errorEl, 'Lütfen geçerli bir limit gir.');
+
+    if (editingCardId) {
+      return saveCardEdit(name, limit, statementDay, errorEl);
+    }
 
     const { data, error } = await supabaseClient.from('cards').insert({
       user_id: currentUser.id,
       name: name,
       card_limit: limit,
+      statement_day: statementDay,
     }).select().single();
 
     if (error) return showError(errorEl, 'Eklenemedi: ' + error.message);
 
-    state.cards.push({ id: data.id, name: data.name, limit: Number(data.card_limit) });
+    state.cards.push({ id: data.id, name: data.name, limit: Number(data.card_limit), statementDay: data.statement_day || null });
     closeCardModal();
     renderAll();
   }
 
+  async function saveCardEdit(name, limit, statementDay, errorEl) {
+    const { error } = await supabaseClient.from('cards').update({
+      name: name,
+      card_limit: limit,
+      statement_day: statementDay,
+    }).eq('id', editingCardId);
+
+    if (error) return showError(errorEl, 'Kaydedilemedi: ' + error.message);
+
+    const card = state.cards.find(c => c.id === editingCardId);
+    if (card) {
+      card.name = name;
+      card.limit = limit;
+      card.statementDay = statementDay;
+    }
+
+    closeCardModal();
+    renderAll();
+  }
+
+  async function deleteCardFromModal() {
+    if (!editingCardId) return;
+    const deleted = await deleteCard(editingCardId);
+    if (deleted) closeCardModal();
+  }
+
   async function deleteCard(id) {
-    if (!confirm('Bu kartı silmek istediğine emin misin? Bu karta bağlı tüm harcamalar da silinecek.')) return;
+    if (!confirm('Bu kartı silmek istediğine emin misin? Bu karta bağlı tüm harcamalar da silinecek.')) return false;
 
     // Delete all expenses linked to this card first
     const { error: expError } = await supabaseClient.from('expenses').delete().eq('card_id', id);
-    if (expError) { alert('Harcamalar silinemedi: ' + expError.message); return; }
+    if (expError) { alert('Harcamalar silinemedi: ' + expError.message); return false; }
 
     const { error } = await supabaseClient.from('cards').delete().eq('id', id);
-    if (error) { alert('Silinemedi: ' + error.message); return; }
+    if (error) { alert('Silinemedi: ' + error.message); return false; }
 
     state.cards = state.cards.filter(c => c.id !== id);
     state.expenses = state.expenses.filter(e => e.cardId !== id);
@@ -1416,6 +1574,7 @@
     }
 
     renderAll();
+    return true;
   }
 
   /* ---------------------------------------------------------
@@ -1536,6 +1695,17 @@
     document.getElementById('card-detail-limit').textContent = 'Limit ' + formatCurrency(limit);
     document.getElementById('card-detail-pct').textContent = '%' + Math.round(pct);
     document.getElementById('card-detail-bar').style.width = pct + '%';
+
+    const statementWrap = document.getElementById('card-detail-statement');
+    const statementText = getStatementCountdownText(card.statementDay);
+    if (statementText) {
+      document.getElementById('card-detail-statement-text').textContent = statementText;
+      statementWrap.classList.remove('hidden');
+      statementWrap.classList.add('flex');
+    } else {
+      statementWrap.classList.add('hidden');
+      statementWrap.classList.remove('flex');
+    }
 
     renderCardUpcomingPayments(card.id);
     renderCardDetailExpenses(card.id);
