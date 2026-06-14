@@ -1023,9 +1023,10 @@
 
     // ---------------------------------------------------------------
     // Donut chart with every category labeled around the ring via
-    // leader lines. Labels are distributed left/right of the ring and
-    // stacked vertically (sorted by their natural angle) so they never
-    // overlap, regardless of how many categories there are.
+    // short leader lines. Labels are distributed left/right of the
+    // ring and stacked vertically (sorted top-to-bottom by their
+    // natural angle) so they line up with their slice and never
+    // overlap or cross each other, regardless of category count.
     // ---------------------------------------------------------------
     const radius = 100;
     const strokeWidth = 34;
@@ -1041,7 +1042,6 @@
           fill="none" stroke="${colorHex(item.color)}" stroke-width="${strokeWidth}"
           stroke-dasharray="${dash} ${circumference - dash}"
           stroke-dashoffset="${-offsetAccum}"
-          stroke-linecap="${items.length > 1 ? 'butt' : 'butt'}"
           transform="rotate(-90)"
         />
       `;
@@ -1049,71 +1049,67 @@
       return seg;
     }).join('');
 
-    // Compute mid-angle (in degrees, 0 = top, clockwise) for each item
+    // Compute mid-angle (in degrees, 0 = top, clockwise) for each item,
+    // plus its point on the outer edge of the ring.
     let angleAccum = 0;
     const withAngles = items.map(item => {
       const startAngle = (angleAccum / 100) * 360;
       const sweepAngle = (item.pct / 100) * 360;
-      const midAngleDeg = startAngle + sweepAngle / 2 - 90; // -90 so 0% starts at top
+      const midAngleDeg = startAngle + sweepAngle / 2; // 0deg = top, matches segment rotation
       angleAccum += item.pct;
-      return { ...item, midAngleDeg };
+      const rad = (midAngleDeg * Math.PI) / 180;
+      return {
+        ...item,
+        edgeX: Math.sin(rad) * ringOuter,
+        edgeY: -Math.cos(rad) * ringOuter,
+      };
     });
 
     // Split into left side / right side based on horizontal position
     const leftItems = [];
     const rightItems = [];
     withAngles.forEach(item => {
-      const rad = (item.midAngleDeg * Math.PI) / 180;
-      const cos = Math.cos(rad);
-      if (cos >= 0) rightItems.push(item); else leftItems.push(item);
+      if (item.edgeX >= 0) rightItems.push(item); else leftItems.push(item);
     });
 
     // Sort each side top-to-bottom by their vertical position so the
     // stacked labels roughly line up with where their slice sits.
-    const bySin = (a, b) => Math.sin((a.midAngleDeg * Math.PI) / 180) - Math.sin((b.midAngleDeg * Math.PI) / 180);
-    leftItems.sort(bySin);
-    rightItems.sort(bySin);
+    leftItems.sort((a, b) => a.edgeY - b.edgeY);
+    rightItems.sort((a, b) => a.edgeY - b.edgeY);
 
     // Layout constants
-    const rowHeight = 34;
+    const rowHeight = 36;
     const sideCount = Math.max(leftItems.length, rightItems.length, 1);
     const sideHeight = sideCount * rowHeight;
-    const chartAreaHeight = Math.max(sideHeight, ringOuter * 2);
+    const chartAreaHeight = Math.max(sideHeight, ringOuter * 2) + 16;
     const centerY = chartAreaHeight / 2;
 
-    const labelColW = 132;          // width reserved for each label column
-    const leaderGap = 14;           // horizontal gap between ring edge and label column
-    const ringCenterX = labelColW + leaderGap + ringOuter;
+    const dotGap = 16;              // gap between ring edge and leader-line dot
+    const lineLen = 26;             // length of the straight leader line
+    const textGap = 8;              // gap between leader line end and text
+    const ringCenterX = ringOuter + dotGap + lineLen + textGap + 76;
     const totalWidth = ringCenterX * 2;
 
     function buildSideLabels(sideItems, isRight) {
       const startY = centerY - (sideItems.length * rowHeight) / 2 + rowHeight / 2;
+      const sign = isRight ? 1 : -1;
       return sideItems.map((item, i) => {
-        const rad = (item.midAngleDeg * Math.PI) / 180;
-        const ringX = Math.sin(rad) * ringOuter; // x offset from ring center
-        const ringY = -Math.cos(rad) * ringOuter; // y offset from ring center
-
+        const dotX = ringCenterX + sign * (ringOuter + dotGap);
+        const dotY = centerY + item.edgeY;
         const labelY = startY + i * rowHeight;
-        const labelEdgeX = isRight ? leaderGap : -leaderGap; // x offset from ring center, label-side edge of leader line
 
-        const rgx = ringCenterX + ringX;
-        const rgy = centerY + ringY;
-        const lex = ringCenterX + labelEdgeX;
-        const ley = labelY;
-
-        // simple elbow leader line
-        const midX = ringCenterX + (isRight ? ringOuter + 6 : -ringOuter - 6);
+        const lineEndX = ringCenterX + sign * (ringOuter + dotGap + lineLen);
 
         const textAnchor = isRight ? 'start' : 'end';
-        const textX = isRight ? ringCenterX + ringOuter + leaderGap + 6 : ringCenterX - ringOuter - leaderGap - 6;
+        const textX = lineEndX + sign * textGap;
         const name = item.name.length > 14 ? item.name.slice(0, 13) + '…' : item.name;
 
         return `
-          <polyline points="${rgx},${rgy} ${midX},${ley} ${lex},${ley}"
-            fill="none" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.55" stroke-linecap="round" />
-          <circle cx="${rgx}" cy="${rgy}" r="3" fill="${colorHex(item.color)}" />
-          <text x="${textX}" y="${ley - 4}" text-anchor="${textAnchor}" font-size="12.5" font-weight="700" fill="${colorHex(item.color)}">${escapeHtml(name)}</text>
-          <text x="${textX}" y="${ley + 12}" text-anchor="${textAnchor}" font-size="12" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
+          <line x1="${dotX}" y1="${dotY}" x2="${lineEndX}" y2="${labelY}"
+            stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.55" stroke-linecap="round" />
+          <circle cx="${dotX}" cy="${dotY}" r="3" fill="${colorHex(item.color)}" />
+          <text x="${textX}" y="${labelY - 4}" text-anchor="${textAnchor}" font-size="12.5" font-weight="700" fill="${colorHex(item.color)}">${escapeHtml(name)}</text>
+          <text x="${textX}" y="${labelY + 12}" text-anchor="${textAnchor}" font-size="12" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
         `;
       }).join('');
     }
