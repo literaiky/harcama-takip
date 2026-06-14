@@ -131,6 +131,12 @@
           <div id="installment-options" class="flex flex-wrap gap-1.5">
             <!-- chips render here -->
           </div>
+          <div id="installment-custom-wrap" class="hidden mt-2">
+            <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors">
+              <span class="text-xs font-medium text-zinc-500 mr-2">Taksit Sayısı</span>
+              <input type="number" inputmode="numeric" min="2" max="99" id="installment-custom-input" oninput="onCustomInstallmentInput(this.value)" class="w-full bg-transparent text-sm font-bold text-white text-right focus:outline-none [color-scheme:dark]">
+            </div>
+          </div>
         </div>
 
         <!-- Note -->
@@ -155,18 +161,31 @@
   <section id="page-cards" class="hidden">
 
     <!-- Month Total (clickable to expand history) -->
-    <button onclick="toggleSpendHistory()" class="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl px-4 py-3 mb-4 flex items-center justify-between transition-colors">
-      <div class="text-left">
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Bu Ay Ödenecek</p>
-        <p class="text-xl font-bold text-white" id="month-total">₺0,00</p>
+    <button onclick="toggleSpendHistory()" class="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl px-4 py-4 mb-3 flex items-center justify-between transition-colors">
+      <div class="flex items-center gap-3 text-left">
+        <div class="w-10 h-10 rounded-xl bg-lime-400/10 flex items-center justify-center shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V6m0 10v2m9-8a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Bu Ay Ödenecek</p>
+          <p class="text-xl font-bold text-white" id="month-total">₺0,00</p>
+        </div>
       </div>
-      <svg id="spend-history-chevron" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-zinc-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      <div class="flex items-center gap-1.5 text-zinc-500 shrink-0">
+        <span class="text-xs font-medium hidden sm:inline">Tüm harcamalar</span>
+        <svg id="spend-history-chevron" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </div>
     </button>
 
     <!-- Expandable: all expenses grouped by day -->
-    <div id="spend-history-wrap" class="hidden mb-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-h-[28rem] overflow-y-auto">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Tüm Harcamalar</p>
-      <p class="text-xs text-zinc-500 mb-3">Düzenlemek için bir harcamaya dokun</p>
+    <div id="spend-history-wrap" class="hidden mb-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-h-[28rem] overflow-y-auto">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Tüm Harcamalar</p>
+        <p class="text-xs text-zinc-500 flex items-center gap-1">
+          Düzenlemek için dokun
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </p>
+      </div>
       <div id="spend-history-list" class="space-y-4">
         <!-- grouped expenses render here -->
       </div>
@@ -175,7 +194,7 @@
       </p>
     </div>
 
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-3 mt-5">
       <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kartlarım</h2>
       <button onclick="openCardModal()" class="text-sm font-medium text-lime-400 hover:text-lime-300 transition-colors flex items-center gap-1">
         <span class="text-lg leading-none">+</span> Kart Ekle
@@ -193,11 +212,11 @@
     </p>
 
     <!-- Selected card detail (inline) -->
-    <div id="card-detail-wrap" class="hidden mt-6 space-y-5">
+    <div id="card-detail-wrap" class="hidden mt-5 space-y-3">
 
       <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
         <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek</p>
-        <p id="card-detail-spent" class="text-2xl font-bold text-white mb-2"></p>
+        <p id="card-detail-spent" class="text-2xl font-bold text-white mb-3"></p>
         <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
           <span id="card-detail-limit"></span>
           <span id="card-detail-pct"></span>
@@ -207,15 +226,33 @@
         </div>
       </div>
 
-      <div id="card-detail-upcoming-wrap" class="hidden">
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Gelecek Ödemeler</p>
-        <div id="card-detail-upcoming" class="space-y-2">
+      <!-- Upcoming payments: collapsed by default, single summary line -->
+      <div id="card-detail-upcoming-wrap" class="hidden bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+        <button type="button" onclick="toggleCardUpcoming()" class="w-full flex items-center justify-between gap-2 p-4">
+          <div class="flex items-center gap-3 text-left">
+            <div class="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-[18px] h-[18px] text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-white">Gelecek Ödemeler</p>
+              <p id="card-detail-upcoming-summary" class="text-xs text-zinc-500"></p>
+            </div>
+          </div>
+          <svg id="card-detail-upcoming-chevron" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-zinc-500 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+        <div id="card-detail-upcoming" class="hidden space-y-2 px-4 pb-4">
           <!-- upcoming installment months render here -->
         </div>
       </div>
 
-      <div>
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Harcamalar</p>
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Harcamalar</p>
+          <p class="text-xs text-zinc-500 flex items-center gap-1">
+            Düzenlemek için dokun
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </p>
+        </div>
         <div id="card-detail-list" class="space-y-4">
           <!-- grouped expenses render here -->
         </div>
@@ -232,13 +269,18 @@
   <!-- PAGE: STATS -->
   <section id="page-stats" class="hidden">
 
-    <!-- Pie chart -->
+    <!-- Pie chart + legend -->
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
       <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Toplam Harcama</p>
       <p id="stats-total" class="text-2xl font-bold text-white mb-5">₺0,00</p>
 
-      <div id="stats-chart-wrap" class="flex items-center justify-center mb-2">
-        <!-- SVG pie chart renders here -->
+      <div class="flex flex-col sm:flex-row items-center gap-6">
+        <div id="stats-chart-wrap" class="flex items-center justify-center shrink-0">
+          <!-- SVG pie chart renders here -->
+        </div>
+        <div id="stats-legend" class="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <!-- legend chips render here -->
+        </div>
       </div>
       <p id="stats-empty" class="hidden text-sm text-zinc-500 text-center py-4">
         Henüz harcama bulunmuyor.
@@ -262,6 +304,10 @@
       <div id="categories-list" class="flex flex-wrap gap-2">
         <!-- category chips render here -->
       </div>
+      <p id="categories-note" class="hidden text-xs text-zinc-500 mt-3 flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-12V7a4 4 0 10-8 0v2"/></svg>
+        Kilit ikonlu kategoriler baz kategorilerdir ve silinemez.
+      </p>
     </div>
 
   </section>
@@ -392,6 +438,12 @@
         <label class="block text-xs font-medium text-zinc-400 mb-2">Ödeme Tipi</label>
         <div id="edit-installment-options" class="flex flex-wrap gap-1.5">
           <!-- chips render here -->
+        </div>
+        <div id="edit-installment-custom-wrap" class="hidden mt-2">
+          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors">
+            <span class="text-xs font-medium text-zinc-500 mr-2">Taksit Sayısı</span>
+            <input type="number" inputmode="numeric" min="2" max="99" id="edit-installment-custom-input" oninput="onEditCustomInstallmentInput(this.value)" class="w-full bg-transparent text-sm font-bold text-white text-right focus:outline-none [color-scheme:dark]">
+          </div>
         </div>
       </div>
 
@@ -556,7 +608,7 @@
     ]);
 
     state.cards = (cardsRes.data || []).map(c => ({ id: c.id, name: c.name, limit: Number(c.card_limit) }));
-    state.categories = (categoriesRes.data || []).map(c => ({ id: c.id, name: c.name, color: c.color }));
+    state.categories = (categoriesRes.data || []).map(c => ({ id: c.id, name: c.name, color: c.color, isDefault: !!c.is_default }));
     state.expenses = (expensesRes.data || []).map(e => ({
       id: e.id,
       amount: Number(e.amount),
@@ -571,27 +623,49 @@
 
   // First-time setup: give a brand new account some starter categories
   async function ensureDefaultData() {
-    const { count, error } = await supabaseClient
+    const { data: existing, error } = await supabaseClient
       .from('categories')
-      .select('*', { count: 'exact', head: true });
+      .select('*');
 
     if (error) {
       console.error('Kategori kontrolü başarısız', error);
       return;
     }
 
-    if (count === 0) {
-      const defaults = [
-        { name: 'Market', color: 'lime' },
-        { name: 'Ulaşım', color: 'sky' },
-        { name: 'Faturalar', color: 'amber' },
-        { name: 'Eğlence', color: 'pink' },
-        { name: 'Giyim', color: 'red' },
-        { name: 'Diğer', color: 'zinc' },
-      ].map(c => ({ ...c, user_id: currentUser.id }));
+    const DEFAULT_DEFS = [
+      { name: 'Market', color: 'lime' },
+      { name: 'Ulaşım', color: 'sky' },
+      { name: 'Faturalar', color: 'amber' },
+      { name: 'Eğlence', color: 'pink' },
+      { name: 'Giyim', color: 'red' },
+      { name: 'Diğer', color: 'zinc' },
+    ];
 
+    if (!existing || existing.length === 0) {
+      const defaults = DEFAULT_DEFS.map(c => ({ ...c, user_id: currentUser.id, is_default: true }));
       const { error: insertError } = await supabaseClient.from('categories').insert(defaults);
       if (insertError) console.error('Varsayılan kategoriler eklenemedi', insertError);
+      return;
+    }
+
+    // Backfill: existing accounts created before the is_default column existed
+    // won't have any category flagged as default yet. Mark the original
+    // starter categories (by name match) as default so they can't be deleted.
+    try {
+      const noneFlagged = existing.every(c => !c.is_default);
+      if (noneFlagged) {
+        const matches = existing.filter(c => DEFAULT_DEFS.some(d => d.name === c.name));
+        if (matches.length > 0) {
+          const ids = matches.map(c => c.id);
+          const { error: updateError } = await supabaseClient
+            .from('categories')
+            .update({ is_default: true })
+            .in('id', ids);
+          if (updateError) console.error('Baz kategori güncellemesi başarısız', updateError);
+        }
+      }
+    } catch (e) {
+      console.error('Baz kategori güncellemesi başarısız', e);
     }
   }
   function formatCurrency(value) {
@@ -769,6 +843,7 @@
   function renderStats() {
     const chartWrap = document.getElementById('stats-chart-wrap');
     const empty = document.getElementById('stats-empty');
+    const legend = document.getElementById('stats-legend');
     const breakdown = document.getElementById('stats-breakdown');
     const totalEl = document.getElementById('stats-total');
 
@@ -786,6 +861,7 @@
 
     if (grandTotal === 0) {
       chartWrap.innerHTML = '';
+      legend.innerHTML = '';
       breakdown.innerHTML = '';
       empty.classList.remove('hidden');
       return;
@@ -797,7 +873,7 @@
       const cat = state.categories.find(c => c.id === catId);
       return {
         id: catId,
-        name: cat ? cat.name : 'Diğer',
+        name: cat ? cat.name : 'Kategori silindi',
         color: cat ? cat.color : 'zinc',
         amount: totals[catId],
         pct: (totals[catId] / grandTotal) * 100,
@@ -830,6 +906,15 @@
       </svg>
     `;
 
+    // Legend: colored swatch + category name + percentage, next to the chart
+    legend.innerHTML = items.map(item => `
+      <div class="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2">
+        <span class="w-3 h-3 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
+        <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
+        <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
+      </div>
+    `).join('');
+
     // Breakdown list
     breakdown.innerHTML = items.map(item => `
       <div>
@@ -861,13 +946,22 @@
       return;
     }
 
-    list.innerHTML = state.categories.map(cat => `
-      <span class="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-200">
-        <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
-        ${escapeHtml(cat.name)}
-        <button onclick="deleteCategory('${cat.id}')" title="Kategoriyi sil" class="text-zinc-500 hover:text-red-400 transition-colors ml-1 leading-none">✕</button>
-      </span>
-    `).join('');
+    list.innerHTML = state.categories.map(cat => {
+      const trailing = cat.isDefault
+        ? `<svg xmlns="http://www.w3.org/2000/svg" title="Baz kategori, silinemez" class="w-3.5 h-3.5 text-zinc-600 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-12V7a4 4 0 10-8 0v2"/></svg>`
+        : `<button onclick="deleteCategory('${cat.id}')" title="Kategoriyi sil" class="text-zinc-500 hover:text-red-400 transition-colors ml-1 leading-none">✕</button>`;
+
+      return `
+        <span class="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-200">
+          <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
+          ${escapeHtml(cat.name)}
+          ${trailing}
+        </span>
+      `;
+    }).join('');
+
+    const note = document.getElementById('categories-note');
+    if (note) note.classList.remove('hidden');
   }
 
   /* ---------------------------------------------------------
@@ -950,8 +1044,10 @@
   --------------------------------------------------------- */
   function renderInstallmentOptions() {
     const container = document.getElementById('installment-options');
-    container.innerHTML = INSTALLMENT_OPTIONS.map(n => {
-      const isActive = state.selectedInstallment === n;
+    const isCustom = !INSTALLMENT_OPTIONS.includes(state.selectedInstallment);
+
+    const chips = INSTALLMENT_OPTIONS.map(n => {
+      const isActive = !isCustom && state.selectedInstallment === n;
       const label = n === 1 ? 'Tek Çekim' : `${n} Taksit`;
       const activeClasses = 'bg-lime-400 text-zinc-950';
       const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
@@ -961,11 +1057,48 @@
         </button>
       `;
     }).join('');
+
+    const customActiveClasses = 'bg-lime-400 text-zinc-950';
+    const customInactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+    const customLabel = isCustom ? `${state.selectedInstallment} Taksit` : 'Diğer';
+
+    container.innerHTML = chips + `
+      <button type="button" onclick="selectCustomInstallment()" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCustom ? customActiveClasses : customInactiveClasses}">
+        ${customLabel}
+      </button>
+    `;
+
+    const customWrap = document.getElementById('installment-custom-wrap');
+    if (customWrap) {
+      customWrap.classList.toggle('hidden', !isCustom);
+      const input = document.getElementById('installment-custom-input');
+      if (isCustom && input && Number(input.value) !== state.selectedInstallment) {
+        input.value = state.selectedInstallment;
+      }
+    }
   }
 
   function selectInstallment(n) {
     state.selectedInstallment = n;
     renderInstallmentOptions();
+  }
+
+  function selectCustomInstallment() {
+    if (!INSTALLMENT_OPTIONS.includes(state.selectedInstallment)) return; // already custom
+    state.selectedInstallment = 2; // sensible starting value not in the quick list
+    renderInstallmentOptions();
+    const input = document.getElementById('installment-custom-input');
+    if (input) { input.value = state.selectedInstallment; input.focus(); input.select(); }
+  }
+
+  function onCustomInstallmentInput(value) {
+    let n = parseInt(value, 10);
+    if (isNaN(n) || n < 2) n = 2;
+    if (n > 99) n = 99;
+    state.selectedInstallment = n;
+    // Refresh chip label without losing focus on the input
+    const chip = document.querySelector('#installment-options button:last-child');
+    if (chip) chip.textContent = `${n} Taksit`;
   }
 
   /* ---------------------------------------------------------
@@ -1107,8 +1240,10 @@
 
   function renderEditInstallmentOptions() {
     const container = document.getElementById('edit-installment-options');
-    container.innerHTML = INSTALLMENT_OPTIONS.map(n => {
-      const isActive = editSelectedInstallment === n;
+    const isCustom = !INSTALLMENT_OPTIONS.includes(editSelectedInstallment);
+
+    const chips = INSTALLMENT_OPTIONS.map(n => {
+      const isActive = !isCustom && editSelectedInstallment === n;
       const label = n === 1 ? 'Tek Çekim' : `${n} Taksit`;
       const activeClasses = 'bg-lime-400 text-zinc-950';
       const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
@@ -1118,11 +1253,47 @@
         </button>
       `;
     }).join('');
+
+    const customActiveClasses = 'bg-lime-400 text-zinc-950';
+    const customInactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+    const customLabel = isCustom ? `${editSelectedInstallment} Taksit` : 'Diğer';
+
+    container.innerHTML = chips + `
+      <button type="button" onclick="selectEditCustomInstallment()" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isCustom ? customActiveClasses : customInactiveClasses}">
+        ${customLabel}
+      </button>
+    `;
+
+    const customWrap = document.getElementById('edit-installment-custom-wrap');
+    if (customWrap) {
+      customWrap.classList.toggle('hidden', !isCustom);
+      const input = document.getElementById('edit-installment-custom-input');
+      if (isCustom && input && Number(input.value) !== editSelectedInstallment) {
+        input.value = editSelectedInstallment;
+      }
+    }
   }
 
   function selectEditInstallment(n) {
     editSelectedInstallment = n;
     renderEditInstallmentOptions();
+  }
+
+  function selectEditCustomInstallment() {
+    if (!INSTALLMENT_OPTIONS.includes(editSelectedInstallment)) return; // already custom
+    editSelectedInstallment = 2;
+    renderEditInstallmentOptions();
+    const input = document.getElementById('edit-installment-custom-input');
+    if (input) { input.value = editSelectedInstallment; input.focus(); input.select(); }
+  }
+
+  function onEditCustomInstallmentInput(value) {
+    let n = parseInt(value, 10);
+    if (isNaN(n) || n < 2) n = 2;
+    if (n > 99) n = 99;
+    editSelectedInstallment = n;
+    const chip = document.querySelector('#edit-installment-options button:last-child');
+    if (chip) chip.textContent = `${n} Taksit`;
   }
 
   async function saveExpenseEdit() {
@@ -1291,6 +1462,7 @@
     list.innerHTML = sortedDates.map(dateKey => {
       const dayExpenses = groups[dateKey];
       const dayTotal = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+      const isToday = dateKey === todayDateString();
 
       const rows = dayExpenses.map(exp => {
         const cat = state.categories.find(c => c.id === exp.categoryId);
@@ -1298,6 +1470,7 @@
         const catName = cat ? cat.name : 'Kategori silindi';
         const cardName = card ? card.name : 'Kart silindi';
         const titleText = exp.note ? escapeHtml(exp.note) : catName;
+        const dotColor = cat ? colorHex(cat.color) : colorHex('zinc');
 
         let installmentText = '';
         let amountDisplay = formatCurrency(exp.amount);
@@ -1308,23 +1481,29 @@
         }
 
         return `
-          <button type="button" onclick="openExpenseEditModal('${exp.id}')" class="w-full flex items-center justify-between gap-3 py-2.5 text-left hover:bg-zinc-800/50 rounded-lg px-2 -mx-2 transition-colors">
-            <div>
-              <p class="text-sm font-medium text-white">${titleText}</p>
-              <p class="text-xs text-zinc-500 mt-0.5">${catName} · ${cardName}${installmentText}</p>
+          <button type="button" onclick="openExpenseEditModal('${exp.id}')" class="w-full flex items-center gap-3 py-2.5 text-left hover:bg-zinc-800/60 active:bg-zinc-800 rounded-lg px-2 -mx-2 transition-colors group">
+            <span class="w-2 h-2 rounded-full shrink-0" style="background:${dotColor}"></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white truncate">${titleText}</p>
+              <p class="text-xs text-zinc-500 mt-0.5 truncate">${catName} · ${cardName}${installmentText}</p>
             </div>
             <p class="text-sm font-bold text-white text-right shrink-0">${amountDisplay}</p>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         `;
       }).join('');
 
+      const labelClasses = isToday
+        ? 'text-xs font-bold text-lime-400 uppercase tracking-widest'
+        : 'text-xs font-semibold text-zinc-400 uppercase tracking-widest';
+
       return `
         <div>
-          <div class="flex items-center justify-between mb-1">
-            <p class="text-xs font-semibold text-zinc-400">${formatDateLabel(dateKey)}</p>
+          <div class="flex items-center justify-between mb-1.5">
+            <p class="${labelClasses}">${formatDateLabel(dateKey)}</p>
             <p class="text-xs font-semibold text-zinc-400">${formatCurrency(dayTotal)}</p>
           </div>
-          <div class="divide-y divide-zinc-800 border-t border-zinc-800">
+          <div class="divide-y divide-zinc-800/70 border-t border-zinc-800/70">
             ${rows}
           </div>
         </div>
@@ -1367,6 +1546,8 @@
   function renderCardUpcomingPayments(cardId) {
     const wrap = document.getElementById('card-detail-upcoming-wrap');
     const container = document.getElementById('card-detail-upcoming');
+    const summary = document.getElementById('card-detail-upcoming-summary');
+    const chevron = document.getElementById('card-detail-upcoming-chevron');
     const monthNames = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 
     const cardExpenses = state.expenses.filter(e => e.cardId === cardId && e.installment > 1);
@@ -1406,6 +1587,13 @@
     }
     wrap.classList.remove('hidden');
 
+    // Collapsed summary line, e.g. "3 ay · sonraki ay ₺1.250,00"
+    summary.textContent = `${rows.length} ay boyunca devam ediyor · ${monthNames[rows[0].month]}: ${formatCurrency(rows[0].monthTotal)}`;
+
+    // Reset to collapsed state whenever this renders (e.g. switching cards)
+    container.classList.add('hidden');
+    chevron.style.transform = 'rotate(0deg)';
+
     container.innerHTML = rows.map((row, idx) => {
       const itemsHtml = row.items.map(item => `
         <div class="flex items-center justify-between text-xs text-zinc-400">
@@ -1431,6 +1619,14 @@
         </div>
       `;
     }).join('');
+  }
+
+  function toggleCardUpcoming() {
+    const container = document.getElementById('card-detail-upcoming');
+    const chevron = document.getElementById('card-detail-upcoming-chevron');
+    const isHidden = container.classList.contains('hidden');
+    container.classList.toggle('hidden');
+    chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
   }
 
   function toggleUpcomingMonth(detailId, chevronId) {
@@ -1475,6 +1671,7 @@
         const cat = state.categories.find(c => c.id === exp.categoryId);
         const catName = cat ? cat.name : 'Kategori silindi';
         const titleText = exp.note ? escapeHtml(exp.note) : catName;
+        const dotColor = cat ? colorHex(cat.color) : colorHex('zinc');
 
         let installmentText = '';
         let amountDisplay = formatCurrency(exp.amount);
@@ -1485,12 +1682,14 @@
         }
 
         return `
-          <button type="button" onclick="openExpenseEditModal('${exp.id}')" class="w-full flex items-center justify-between gap-3 py-2.5 text-left hover:bg-zinc-800/50 rounded-lg px-2 -mx-2 transition-colors">
-            <div>
-              <p class="text-sm font-medium text-white">${titleText}</p>
-              <p class="text-xs text-zinc-500 mt-0.5">${catName}${installmentText}</p>
+          <button type="button" onclick="openExpenseEditModal('${exp.id}')" class="w-full flex items-center gap-3 py-2.5 text-left hover:bg-zinc-800/60 active:bg-zinc-800 rounded-lg px-2 -mx-2 transition-colors group">
+            <span class="w-2 h-2 rounded-full shrink-0" style="background:${dotColor}"></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-white truncate">${titleText}</p>
+              <p class="text-xs text-zinc-500 mt-0.5 truncate">${catName}${installmentText}</p>
             </div>
             <p class="text-sm font-bold text-white text-right shrink-0">${amountDisplay}</p>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
           </button>
         `;
       }).join('');
@@ -1505,15 +1704,15 @@
 
       const labelClasses = isToday
         ? 'text-xs font-bold text-lime-400 uppercase tracking-widest'
-        : 'text-xs font-semibold text-zinc-400';
+        : 'text-xs font-semibold text-zinc-400 uppercase tracking-widest';
 
       const totalClasses = isToday
         ? 'text-xs font-bold text-lime-400'
         : 'text-xs font-semibold text-zinc-400';
 
       const dividerClasses = isToday
-        ? 'divide-y divide-zinc-800'
-        : 'divide-y divide-zinc-800 border-t border-zinc-800';
+        ? 'divide-y divide-zinc-800/70'
+        : 'divide-y divide-zinc-800/70 border-t border-zinc-800/70';
 
       return `
         <div class="${groupClasses}">
@@ -1589,16 +1788,23 @@
       user_id: currentUser.id,
       name: name,
       color: state.selectedColor,
+      is_default: false,
     }).select().single();
 
     if (error) return showError(errorEl, 'Eklenemedi: ' + error.message);
 
-    state.categories.push({ id: data.id, name: data.name, color: data.color });
+    state.categories.push({ id: data.id, name: data.name, color: data.color, isDefault: false });
     closeCategoryModal();
     renderAll();
   }
 
   async function deleteCategory(id) {
+    const cat = state.categories.find(c => c.id === id);
+    if (cat && cat.isDefault) {
+      alert('Baz kategoriler silinemez.');
+      return;
+    }
+
     if (!confirm('Bu kategoriyi silmek istediğine emin misin? Bu kategoriye bağlı harcamalar listede kalır ancak "Kategori silindi" olarak görünür.')) return;
 
     const { error } = await supabaseClient.from('categories').delete().eq('id', id);
