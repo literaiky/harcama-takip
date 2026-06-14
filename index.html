@@ -1022,114 +1022,50 @@
     }).sort((a, b) => b.amount - a.amount);
 
     // ---------------------------------------------------------------
-    // Donut chart with every category labeled around the ring via
-    // short leader lines. Labels are distributed left/right of the
-    // ring and stacked vertically (sorted top-to-bottom by their
-    // natural angle) so they line up with their slice and never
-    // overlap or cross each other, regardless of category count.
+    // Simple, clean donut: just the ring + a center label, with every
+    // category's name and percentage listed underneath in a small
+    // color-coded grid (no leader lines, nothing to overlap or cross).
     // ---------------------------------------------------------------
     const radius = 100;
     const strokeWidth = 34;
     const circumference = 2 * Math.PI * radius;
     const ringOuter = radius + strokeWidth / 2;
+    const size = ringOuter * 2;
 
-    // Build the donut segments
     let offsetAccum = 0;
     const segments = items.map(item => {
       const dash = (item.pct / 100) * circumference;
       const seg = `
-        <circle cx="0" cy="0" r="${radius}"
+        <circle cx="${size / 2}" cy="${size / 2}" r="${radius}"
           fill="none" stroke="${colorHex(item.color)}" stroke-width="${strokeWidth}"
           stroke-dasharray="${dash} ${circumference - dash}"
           stroke-dashoffset="${-offsetAccum}"
-          transform="rotate(-90)"
+          transform="rotate(-90 ${size / 2} ${size / 2})"
         />
       `;
       offsetAccum += dash;
       return seg;
     }).join('');
 
-    // Compute mid-angle (in degrees, 0 = top, clockwise) for each item,
-    // plus its point on the outer edge of the ring.
-    let angleAccum = 0;
-    const withAngles = items.map(item => {
-      const startAngle = (angleAccum / 100) * 360;
-      const sweepAngle = (item.pct / 100) * 360;
-      const midAngleDeg = startAngle + sweepAngle / 2; // 0deg = top, matches segment rotation
-      angleAccum += item.pct;
-      const rad = (midAngleDeg * Math.PI) / 180;
-      return {
-        ...item,
-        edgeX: Math.sin(rad) * ringOuter,
-        edgeY: -Math.cos(rad) * ringOuter,
-      };
-    });
-
-    // Split into left side / right side based on horizontal position
-    const leftItems = [];
-    const rightItems = [];
-    withAngles.forEach(item => {
-      if (item.edgeX >= 0) rightItems.push(item); else leftItems.push(item);
-    });
-
-    // Sort each side top-to-bottom by their vertical position so the
-    // stacked labels roughly line up with where their slice sits.
-    leftItems.sort((a, b) => a.edgeY - b.edgeY);
-    rightItems.sort((a, b) => a.edgeY - b.edgeY);
-
-    // Layout constants
-    const rowHeight = 36;
-    const sideCount = Math.max(leftItems.length, rightItems.length, 1);
-    const sideHeight = sideCount * rowHeight;
-    const chartAreaHeight = Math.max(sideHeight, ringOuter * 2) + 16;
-    const centerY = chartAreaHeight / 2;
-
-    const dotGap = 16;              // gap between ring edge and leader-line dot
-    const lineLen = 26;             // length of the straight leader line
-    const textGap = 8;              // gap between leader line end and text
-    const ringCenterX = ringOuter + dotGap + lineLen + textGap + 76;
-    const totalWidth = ringCenterX * 2;
-
-    function buildSideLabels(sideItems, isRight) {
-      const startY = centerY - (sideItems.length * rowHeight) / 2 + rowHeight / 2;
-      const sign = isRight ? 1 : -1;
-      return sideItems.map((item, i) => {
-        const dotX = ringCenterX + sign * (ringOuter + dotGap);
-        const dotY = centerY + item.edgeY;
-        const labelY = startY + i * rowHeight;
-
-        const lineEndX = ringCenterX + sign * (ringOuter + dotGap + lineLen);
-
-        const textAnchor = isRight ? 'start' : 'end';
-        const textX = lineEndX + sign * textGap;
-        const name = item.name.length > 14 ? item.name.slice(0, 13) + '…' : item.name;
-
-        return `
-          <line x1="${dotX}" y1="${dotY}" x2="${lineEndX}" y2="${labelY}"
-            stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.55" stroke-linecap="round" />
-          <circle cx="${dotX}" cy="${dotY}" r="3" fill="${colorHex(item.color)}" />
-          <text x="${textX}" y="${labelY - 4}" text-anchor="${textAnchor}" font-size="12.5" font-weight="700" fill="${colorHex(item.color)}">${escapeHtml(name)}</text>
-          <text x="${textX}" y="${labelY + 12}" text-anchor="${textAnchor}" font-size="12" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
-        `;
-      }).join('');
-    }
-
-    const leftLabels = buildSideLabels(leftItems, false);
-    const rightLabels = buildSideLabels(rightItems, true);
-
     chartWrap.innerHTML = `
-      <svg width="${totalWidth}" height="${chartAreaHeight}" viewBox="0 0 ${totalWidth} ${chartAreaHeight}" style="max-width:100%; height:auto;">
-        <g transform="translate(${ringCenterX} ${centerY})">
+      <div class="flex flex-col items-center gap-5 w-full">
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="max-width:220px; height:auto;">
           ${segments}
-        </g>
-        <g>
-          <text x="${ringCenterX}" y="${centerY - 6}" text-anchor="middle" font-size="22" font-weight="800" fill="#ffffff">${items.length}</text>
-          <text x="${ringCenterX}" y="${centerY + 14}" text-anchor="middle" font-size="11" font-weight="600" fill="#71717a" letter-spacing="1.5">KATEGORİ</text>
-        </g>
-        ${leftLabels}
-        ${rightLabels}
-      </svg>
+          <text x="${size / 2}" y="${size / 2 - 6}" text-anchor="middle" font-size="22" font-weight="800" fill="#ffffff">${items.length}</text>
+          <text x="${size / 2}" y="${size / 2 + 14}" text-anchor="middle" font-size="11" font-weight="600" fill="#71717a" letter-spacing="1.5">KATEGORİ</text>
+        </svg>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
+          ${items.map(item => `
+            <div class="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 min-w-0">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
+              <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
+              <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     `;
+
 
     // Breakdown list — every category, in order, with progress bars
     breakdown.innerHTML = items.map((item, idx) => `
