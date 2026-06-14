@@ -1022,50 +1022,110 @@
     }).sort((a, b) => b.amount - a.amount);
 
     // ---------------------------------------------------------------
-    // Simple, clean donut: just the ring + a center label, with every
-    // category's name and percentage listed underneath in a small
-    // color-coded grid (no leader lines, nothing to overlap or cross).
+    // Full pie chart with each slice's name + percentage placed outside
+    // the circle, connected by a smooth curved leader line. Labels are
+    // split left/right based on where their slice sits and stacked
+    // vertically (sorted top-to-bottom) so they line up nicely and
+    // never overlap. Curves bow outward first, so they never cross
+    // through the pie itself.
     // ---------------------------------------------------------------
-    const radius = 100;
-    const strokeWidth = 34;
-    const circumference = 2 * Math.PI * radius;
-    const ringOuter = radius + strokeWidth / 2;
-    const size = ringOuter * 2;
+    const r = 100; // pie radius
 
-    let offsetAccum = 0;
-    const segments = items.map(item => {
-      const dash = (item.pct / 100) * circumference;
-      const seg = `
-        <circle cx="${size / 2}" cy="${size / 2}" r="${radius}"
-          fill="none" stroke="${colorHex(item.color)}" stroke-width="${strokeWidth}"
-          stroke-dasharray="${dash} ${circumference - dash}"
-          stroke-dashoffset="${-offsetAccum}"
-          transform="rotate(-90 ${size / 2} ${size / 2})"
-        />
-      `;
-      offsetAccum += dash;
-      return seg;
+    // Build pie slice paths
+    let pieOffsetAccum = 0;
+    const slices = items.map(item => {
+      const startAngle = (pieOffsetAccum / 100) * 360;
+      const sweepAngle = (item.pct / 100) * 360;
+      pieOffsetAccum += item.pct;
+      const endAngle = startAngle + sweepAngle;
+
+      const toXY = (deg) => {
+        const rad = (deg * Math.PI) / 180;
+        return [Math.sin(rad) * r, -Math.cos(rad) * r];
+      };
+      const [x1, y1] = toXY(startAngle);
+      const [x2, y2] = toXY(endAngle);
+      const largeArc = sweepAngle > 180 ? 1 : 0;
+
+      // Full circle (single category) needs two arcs to render as a path
+      if (items.length === 1) {
+        return `<circle cx="0" cy="0" r="${r}" fill="${colorHex(item.color)}" />`;
+      }
+
+      return `<path d="M 0 0 L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${colorHex(item.color)}" stroke="#18181b" stroke-width="1.5" />`;
     }).join('');
 
-    chartWrap.innerHTML = `
-      <div class="flex flex-col items-center gap-5 w-full">
-        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="max-width:220px; height:auto;">
-          ${segments}
-          <text x="${size / 2}" y="${size / 2 - 6}" text-anchor="middle" font-size="22" font-weight="800" fill="#ffffff">${items.length}</text>
-          <text x="${size / 2}" y="${size / 2 + 14}" text-anchor="middle" font-size="11" font-weight="600" fill="#71717a" letter-spacing="1.5">KATEGORİ</text>
-        </svg>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
-          ${items.map(item => `
-            <div class="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 min-w-0">
-              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
-              <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
-              <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
+    // Compute each item's mid-angle edge point (for the leader line start)
+    let labelOffsetAccum = 0;
+    const withEdge = items.map(item => {
+      const midAngle = ((labelOffsetAccum + item.pct / 2) / 100) * 360;
+      labelOffsetAccum += item.pct;
+      const rad = (midAngle * Math.PI) / 180;
+      return {
+        ...item,
+        edgeX: Math.sin(rad) * r,
+        edgeY: -Math.cos(rad) * r,
+      };
+    });
 
+    // Split into left / right groups
+    const leftItems = [];
+    const rightItems = [];
+    withEdge.forEach(item => (item.edgeX >= 0 ? rightItems : leftItems).push(item));
+    leftItems.sort((a, b) => a.edgeY - b.edgeY);
+    rightItems.sort((a, b) => a.edgeY - b.edgeY);
+
+    // Layout
+    const rowHeight = 46;
+    const sideCount = Math.max(leftItems.length, rightItems.length, 1);
+    const sideHeight = sideCount * rowHeight;
+    const chartH = Math.max(sideHeight, r * 2) + 24;
+    const cy = chartH / 2;
+
+    const labelDotGap = 14;   // gap from pie edge to where the curve starts widening
+    const labelLineX = r + 46; // x distance (from center) where the leader line ends, label begins
+    const cx = labelLineX + 110; // half-width reserved for labels on each side
+    const totalW = cx * 2;
+
+    function buildLabels(sideItems, isRight) {
+      const sign = isRight ? 1 : -1;
+      const startY = cy - (sideItems.length * rowHeight) / 2 + rowHeight / 2;
+      return sideItems.map((item, i) => {
+        const labelY = startY + i * rowHeight;
+        const lineEndX = cx + sign * labelLineX;
+        const textX = lineEndX + sign * 8;
+        const textAnchor = isRight ? 'start' : 'end';
+
+        // Curve: start at pie edge, bow outward along the radial
+        // direction, then sweep to the label's height.
+        const p0x = cx + item.edgeX;
+        const p0y = cy + item.edgeY;
+        const bowX = cx + sign * (r + labelDotGap + 30);
+        const bowY = p0y;
+
+        const name = item.name.length > 13 ? item.name.slice(0, 12) + '…' : item.name;
+
+        return `
+          <path d="M ${p0x} ${p0y} Q ${bowX} ${bowY}, ${lineEndX} ${labelY}"
+            fill="none" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" />
+          <text x="${textX}" y="${labelY - 5}" text-anchor="${textAnchor}" font-size="13" font-weight="700" fill="#ffffff">${escapeHtml(name)}</text>
+          <text x="${textX}" y="${labelY + 12}" text-anchor="${textAnchor}" font-size="12.5" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
+        `;
+      }).join('');
+    }
+
+    const leftLabels = buildLabels(leftItems, false);
+    const rightLabels = buildLabels(rightItems, true);
+
+    chartWrap.innerHTML = `
+      <svg width="${totalW}" height="${chartH}" viewBox="0 0 ${totalW} ${chartH}" style="max-width:100%; height:auto;">
+        <g transform="translate(${cx} ${cy})">
+          ${slices}
+        </g>
+        ${leftLabels}
+        ${rightLabels}
+      </svg>
+    `;
 
     // Breakdown list — every category, in order, with progress bars
     breakdown.innerHTML = items.map((item, idx) => `
