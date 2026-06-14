@@ -2546,6 +2546,15 @@
   }
 
   async function init() {
+    // Recovery linkinden geliyorsa URL hash'inde type=recovery olur.
+    // getSession() recovery token'ı hemen oturum açar ve PASSWORD_RECOVERY
+    // eventi daha geç gelir — bu yüzden önce hash'i kontrol ediyoruz.
+    const hash = window.location.hash;
+    if (hash && hash.includes('type=recovery')) {
+      showAuthScreen();
+      return; // onAuthStateChange PASSWORD_RECOVERY eventi devralacak
+    }
+
     const { data } = await supabaseClient.auth.getSession();
     if (data.session && !isPasswordRecovery) {
       await onAuthSuccess(data.session.user);
