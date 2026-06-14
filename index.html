@@ -1022,16 +1022,13 @@
     }).sort((a, b) => b.amount - a.amount);
 
     // ---------------------------------------------------------------
-    // Full pie chart with each slice's name + percentage placed outside
-    // the circle, connected by a simple straight leader line (a short
-    // radial step out, then a horizontal segment to the label). Labels
-    // are split left/right based on where their slice sits and stacked
-    // vertically (sorted top-to-bottom) so they line up nicely and
-    // never overlap or cross each other.
+    // Clean pie chart + plain legend list, side by side. No leader
+    // lines, nothing that can overlap or cross — just a pie and a
+    // list of color dot / name / percentage rows.
     // ---------------------------------------------------------------
     const r = 100; // pie radius
+    const size = r * 2;
 
-    // Build pie slice paths
     let pieOffsetAccum = 0;
     const slices = items.map(item => {
       const startAngle = (pieOffsetAccum / 100) * 360;
@@ -1041,7 +1038,7 @@
 
       const toXY = (deg) => {
         const rad = (deg * Math.PI) / 180;
-        return [Math.sin(rad) * r, -Math.cos(rad) * r];
+        return [r + Math.sin(rad) * r, r - Math.cos(rad) * r];
       };
       const [x1, y1] = toXY(startAngle);
       const [x2, y2] = toXY(endAngle);
@@ -1049,86 +1046,27 @@
 
       // Full circle (single category) needs two arcs to render as a path
       if (items.length === 1) {
-        return `<circle cx="0" cy="0" r="${r}" fill="${colorHex(item.color)}" />`;
+        return `<circle cx="${r}" cy="${r}" r="${r}" fill="${colorHex(item.color)}" />`;
       }
 
-      return `<path d="M 0 0 L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${colorHex(item.color)}" stroke="#18181b" stroke-width="1.5" />`;
+      return `<path d="M ${r} ${r} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${colorHex(item.color)}" stroke="#18181b" stroke-width="1.5" />`;
     }).join('');
 
-    // Compute each item's mid-angle edge point (for the leader line start)
-    let labelOffsetAccum = 0;
-    const withEdge = items.map(item => {
-      const midAngle = ((labelOffsetAccum + item.pct / 2) / 100) * 360;
-      labelOffsetAccum += item.pct;
-      const rad = (midAngle * Math.PI) / 180;
-      return {
-        ...item,
-        edgeX: Math.sin(rad) * r,
-        edgeY: -Math.cos(rad) * r,
-      };
-    });
-
-    // Split into left / right groups
-    const leftItems = [];
-    const rightItems = [];
-    withEdge.forEach(item => (item.edgeX >= 0 ? rightItems : leftItems).push(item));
-    leftItems.sort((a, b) => a.edgeY - b.edgeY);
-    rightItems.sort((a, b) => a.edgeY - b.edgeY);
-
-    // Layout
-    const rowHeight = 46;
-    const sideCount = Math.max(leftItems.length, rightItems.length, 1);
-    const sideHeight = sideCount * rowHeight;
-    const chartH = Math.max(sideHeight, r * 2) + 24;
-    const cy = chartH / 2;
-
-    const spineGap = 20;       // how far the shared spine sits beyond the pie radius
-    const labelLineX = r + 46; // x distance (from center) where the leader line ends, label begins
-    const cx = labelLineX + 110; // half-width reserved for labels on each side
-    const totalW = cx * 2;
-
-    function buildLabels(sideItems, isRight) {
-      const sign = isRight ? 1 : -1;
-      const startY = cy - (sideItems.length * rowHeight) / 2 + rowHeight / 2;
-      // Shared vertical "spine" all leader lines pass through before
-      // fanning out to their label. Routing through a common x first
-      // (at each item's own edge height), then to the label, guarantees
-      // the lines preserve relative order and never cross — since both
-      // the spine points and the labels are ordered the same way (by
-      // edge angle / row index).
-      const spineX = sign * (r + spineGap);
-      return sideItems.map((item, i) => {
-        const labelY = startY + i * rowHeight;
-        const lineEndX = cx + sign * labelLineX;
-        const textX = lineEndX + sign * 8;
-        const textAnchor = isRight ? 'start' : 'end';
-
-        const p0x = cx + item.edgeX;
-        const p0y = cy + item.edgeY;
-        const spinePtX = cx + spineX;
-
-        const name = item.name.length > 13 ? item.name.slice(0, 12) + '…' : item.name;
-
-        return `
-          <polyline points="${p0x},${p0y} ${spinePtX},${p0y} ${lineEndX},${labelY}"
-            fill="none" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" stroke-linejoin="round" />
-          <text x="${textX}" y="${labelY - 5}" text-anchor="${textAnchor}" font-size="13" font-weight="700" fill="#ffffff">${escapeHtml(name)}</text>
-          <text x="${textX}" y="${labelY + 12}" text-anchor="${textAnchor}" font-size="12.5" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
-        `;
-      }).join('');
-    }
-
-    const leftLabels = buildLabels(leftItems, false);
-    const rightLabels = buildLabels(rightItems, true);
-
     chartWrap.innerHTML = `
-      <svg width="${totalW}" height="${chartH}" viewBox="0 0 ${totalW} ${chartH}" style="max-width:100%; height:auto;">
-        <g transform="translate(${cx} ${cy})">
+      <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="shrink-0" style="max-width:200px; height:auto;">
           ${slices}
-        </g>
-        ${leftLabels}
-        ${rightLabels}
-      </svg>
+        </svg>
+        <div class="w-full space-y-2">
+          ${items.map(item => `
+            <div class="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2">
+              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
+              <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
+              <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     `;
 
     // Breakdown list — every category, in order, with progress bars
