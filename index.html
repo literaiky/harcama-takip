@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Harcama Takip">
 <meta name="theme-color" content="#09090b">
+<meta name="screen-orientation" content="portrait">
+<style>@media screen and (orientation: landscape) and (max-height: 500px) { body { display: none; } }</style>
 <title>Harcama Takip</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -99,6 +101,17 @@
   .modal-backdrop.hidden {
     display: none;
   }
+  #installment-custom-wrap, #edit-installment-custom-wrap {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.2s ease, opacity 0.15s ease;
+  }
+  #installment-custom-wrap:not(.hidden), #edit-installment-custom-wrap:not(.hidden) {
+    max-height: 60px;
+    opacity: 1;
+  }
+
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 8px; }
@@ -617,6 +630,10 @@
         <div id="color-options" class="flex flex-wrap gap-2">
           <!-- color swatches render here -->
         </div>
+        <div class="flex items-center gap-2 mt-2">
+          <label class="text-xs text-zinc-500">Özel renk:</label>
+          <input type="color" id="custom-color-input" value="#a3e635" onchange="selectCustomColor(this.value)" class="w-8 h-8 rounded-lg border border-zinc-700 bg-transparent cursor-pointer p-0.5">
+        </div>
       </div>
       <p id="category-modal-error" class="hidden text-xs font-medium text-red-400"></p>
     </div>
@@ -739,13 +756,20 @@
   --------------------------------------------------------- */
   const COLOR_PALETTE = [
     { name: 'lime',    bg: 'bg-lime-400',    hex: '#a3e635' },
-    { name: 'sky',     bg: 'bg-sky-400',     hex: '#38bdf8' },
-    { name: 'amber',   bg: 'bg-amber-400',   hex: '#fbbf24' },
-    { name: 'pink',    bg: 'bg-pink-400',    hex: '#f472b6' },
-    { name: 'red',     bg: 'bg-red-400',     hex: '#f87171' },
-    { name: 'purple',  bg: 'bg-purple-400',  hex: '#c084fc' },
     { name: 'emerald', bg: 'bg-emerald-400', hex: '#34d399' },
+    { name: 'teal',    bg: 'bg-teal-400',    hex: '#2dd4bf' },
+    { name: 'sky',     bg: 'bg-sky-400',     hex: '#38bdf8' },
+    { name: 'blue',    bg: 'bg-blue-400',    hex: '#60a5fa' },
+    { name: 'indigo',  bg: 'bg-indigo-400',  hex: '#818cf8' },
+    { name: 'purple',  bg: 'bg-purple-400',  hex: '#c084fc' },
+    { name: 'fuchsia', bg: 'bg-fuchsia-400', hex: '#e879f9' },
+    { name: 'pink',    bg: 'bg-pink-400',    hex: '#f472b6' },
+    { name: 'rose',    bg: 'bg-rose-400',    hex: '#fb7185' },
+    { name: 'red',     bg: 'bg-red-400',     hex: '#f87171' },
     { name: 'orange',  bg: 'bg-orange-400',  hex: '#fb923c' },
+    { name: 'amber',   bg: 'bg-amber-400',   hex: '#fbbf24' },
+    { name: 'yellow',  bg: 'bg-yellow-400',  hex: '#facc15' },
+    { name: 'cyan',    bg: 'bg-cyan-400',    hex: '#22d3ee' },
     { name: 'zinc',    bg: 'bg-zinc-500',    hex: '#71717a' },
   ];
 
@@ -759,6 +783,7 @@
     selectedCardId: null,
     selectedInstallment: 1,
     isRecurring: false,
+    selectedCustomHex: null,
     selectedColor: COLOR_PALETTE[0].name,
     detailCardId: null,
     currentPage: 'home',
@@ -990,8 +1015,27 @@
     await ensureDefaultData();
     await loadAllData();
     await ensureRecurringExpenses();
+    await cleanupOldExpenses();
     showAppScreen();
     renderAll();
+  }
+
+  async function cleanupOldExpenses() {
+    const now = new Date();
+    const cutoff = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+
+    const toDelete = state.expenses.filter(exp => {
+      if (exp.isRecurring) return false;
+      const expDate = new Date(exp.expenseDate + 'T00:00:00');
+      const lastInstMonth = new Date(expDate.getFullYear(), expDate.getMonth() + exp.installment - 1, 1);
+      return lastInstMonth < cutoff;
+    });
+
+    if (toDelete.length === 0) return;
+    const ids = toDelete.map(e => e.id);
+    const { error } = await supabaseClient.from('expenses').delete().in('id', ids);
+    if (error) { console.error('Temizleme hatası:', error); return; }
+    state.expenses = state.expenses.filter(e => !ids.includes(e.id));
   }
 
   function showAuthScreen() {
@@ -1042,12 +1086,14 @@
     }
 
     const DEFAULT_DEFS = [
-      { name: 'Market', color: 'lime' },
-      { name: 'Ulaşım', color: 'sky' },
-      { name: 'Faturalar', color: 'amber' },
-      { name: 'Eğlence', color: 'pink' },
-      { name: 'Giyim', color: 'red' },
-      { name: 'Diğer', color: 'zinc' },
+      { name: 'Yemek',    color: 'orange' },
+      { name: 'İhtiyaç',  color: 'teal' },
+      { name: 'Market',   color: 'lime' },
+      { name: 'Ulaşım',   color: 'sky' },
+      { name: 'Faturalar',color: 'amber' },
+      { name: 'Eğlence',  color: 'pink' },
+      { name: 'Giyim',    color: 'red' },
+      { name: 'Diğer',    color: 'zinc' },
     ];
 
     if (!existing || existing.length === 0) {
@@ -1057,38 +1103,45 @@
       return;
     }
 
-    // Backfill: existing accounts created before the is_default column existed
-    // won't have any category flagged as default yet. Mark the original
-    // starter categories (by name match) as default so they can't be deleted.
+    // Backfill is_default flag for older accounts
     try {
       const noneFlagged = existing.every(c => !c.is_default);
       if (noneFlagged) {
         const matches = existing.filter(c => DEFAULT_DEFS.some(d => d.name === c.name));
         if (matches.length > 0) {
           const ids = matches.map(c => c.id);
-          const { error: updateError } = await supabaseClient
-            .from('categories')
-            .update({ is_default: true })
-            .in('id', ids);
-          if (updateError) console.error('Baz kategori güncellemesi başarısız', updateError);
+          await supabaseClient.from('categories').update({ is_default: true }).in('id', ids);
         }
       }
     } catch (e) {
       console.error('Baz kategori güncellemesi başarısız', e);
+    }
+
+    // Insert any missing default categories for existing users
+    try {
+      const missing = DEFAULT_DEFS.filter(d => !existing.some(e => e.name === d.name));
+      if (missing.length > 0) {
+        const toInsert = missing.map(c => ({ ...c, user_id: currentUser.id, is_default: true }));
+        await supabaseClient.from('categories').insert(toInsert);
+      }
+    } catch (e) {
+      console.error('Eksik varsayılan kategoriler eklenemedi', e);
     }
   }
   function formatCurrency(value) {
     return '₺' + value.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function colorBg(colorName) {
-    const found = COLOR_PALETTE.find(c => c.name === colorName);
-    return found ? found.bg : 'bg-zinc-500';
-  }
-
   function colorHex(colorName) {
+    if (colorName && colorName.startsWith('#')) return colorName;
     const found = COLOR_PALETTE.find(c => c.name === colorName);
     return found ? found.hex : '#71717a';
+  }
+
+  function colorBg(colorName) {
+    if (colorName && colorName.startsWith('#')) return '';
+    const found = COLOR_PALETTE.find(c => c.name === colorName);
+    return found ? found.bg : 'bg-zinc-500';
   }
 
   /* ---------------------------------------------------------
@@ -1297,14 +1350,16 @@
     const breakdown = document.getElementById('stats-breakdown');
     const totalEl = document.getElementById('stats-total');
 
-    // Sum total spend per category (using full expense amounts, not installment portions)
+    const now = new Date();
     const totals = {};
     let grandTotal = 0;
 
     state.expenses.forEach(exp => {
+      const portion = getInstallmentPortion(exp, now.getFullYear(), now.getMonth());
+      if (portion <= 0) return;
       const key = exp.categoryId || '__none__';
-      totals[key] = (totals[key] || 0) + exp.amount;
-      grandTotal += exp.amount;
+      totals[key] = (totals[key] || 0) + portion;
+      grandTotal += portion;
     });
 
     totalEl.textContent = formatCurrency(grandTotal);
@@ -1397,14 +1452,20 @@
       return;
     }
 
-    list.innerHTML = state.categories.map(cat => {
+    const sorted = [...state.categories].sort((a, b) => {
+      if (a.isDefault && !b.isDefault) return -1;
+      if (!a.isDefault && b.isDefault) return 1;
+      return 0;
+    });
+
+    list.innerHTML = sorted.map(cat => {
       const trailing = cat.isDefault
         ? `<svg xmlns="http://www.w3.org/2000/svg" title="Baz kategori, silinemez" class="w-3.5 h-3.5 text-zinc-600 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-12V7a4 4 0 10-8 0v2"/></svg>`
         : `<button onclick="deleteCategory('${cat.id}')" title="Kategoriyi sil" class="text-zinc-500 hover:text-red-400 transition-colors ml-1 leading-none">✕</button>`;
 
       return `
         <span class="flex items-center gap-2 surface-inset rounded-full px-3 py-1.5 text-xs font-medium text-zinc-200">
-          <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" style="background:${colorHex(cat.color)}"></span>
           ${escapeHtml(cat.name)}
           ${trailing}
         </span>
@@ -1428,7 +1489,7 @@
 
     dropdown.innerHTML = state.categories.map(cat => `
       <button type="button" onclick="selectCategory('${cat.id}')" class="w-full flex items-center gap-2 text-left px-3 py-2 rounded-lg hover:bg-zinc-800 text-sm font-medium text-white transition-colors">
-        <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
+        <span class="w-2 h-2 rounded-full shrink-0" style="background:${colorHex(cat.color)}"></span>
         ${escapeHtml(cat.name)}
       </button>
     `).join('');
@@ -1453,7 +1514,7 @@
     state.selectedCategoryId = id;
     const cat = state.categories.find(c => c.id === id);
     document.getElementById('category-label').innerHTML = `
-      <span class="w-2 h-2 rounded-full shrink-0 ${colorBg(cat.color)}"></span>
+      <span class="w-2 h-2 rounded-full shrink-0" style="background:${colorHex(cat.color)}"></span>
       <span class="truncate">${escapeHtml(cat.name)}</span>
     `;
     closeAllDropdowns();
@@ -2019,7 +2080,11 @@
         let subAmountDisplay = '';
         if (exp.installment > 1) {
           const monthly = exp.amount / exp.installment;
-          installmentBadge = `<span class="inline-flex items-center text-[10px] font-bold text-lime-400 bg-lime-400/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">${exp.installment}x</span>`;
+          const expDate = new Date(exp.expenseDate + 'T00:00:00');
+          const now = new Date();
+          const monthDiff = (now.getFullYear() - expDate.getFullYear()) * 12 + (now.getMonth() - expDate.getMonth());
+          const currentNo = Math.max(1, Math.min(monthDiff + 1, exp.installment));
+          installmentBadge = `<span class="inline-flex items-center text-[10px] font-bold text-lime-400 bg-lime-400/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">${currentNo}/${exp.installment}</span>`;
           subAmountDisplay = `${formatCurrency(monthly)}/ay`;
         }
         const recurringBadge = exp.isRecurring ? `<span class="inline-flex items-center text-[10px] font-bold text-sky-400 bg-sky-400/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">↻</span>` : '';
@@ -2238,7 +2303,11 @@
         let subAmountDisplay = '';
         if (exp.installment > 1) {
           const monthly = exp.amount / exp.installment;
-          installmentBadge = `<span class="inline-flex items-center text-[10px] font-bold text-lime-400 bg-lime-400/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">${exp.installment}x</span>`;
+          const expDate = new Date(exp.expenseDate + 'T00:00:00');
+          const now = new Date();
+          const monthDiff = (now.getFullYear() - expDate.getFullYear()) * 12 + (now.getMonth() - expDate.getMonth());
+          const currentNo = Math.max(1, Math.min(monthDiff + 1, exp.installment));
+          installmentBadge = `<span class="inline-flex items-center text-[10px] font-bold text-lime-400 bg-lime-400/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">${currentNo}/${exp.installment}</span>`;
           subAmountDisplay = `${formatCurrency(monthly)}/ay`;
         }
         const recurringBadge = exp.isRecurring ? `<span class="inline-flex items-center text-[10px] font-bold text-sky-400 bg-sky-400/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">↻</span>` : '';
@@ -2338,7 +2407,15 @@
 
   function selectColor(name) {
     state.selectedColor = name;
+    state.selectedCustomHex = null;
     renderColorOptions();
+  }
+
+  function selectCustomColor(hex) {
+    state.selectedCustomHex = hex;
+    state.selectedColor = '__custom__';
+    // Deselect all palette swatches
+    document.querySelectorAll('#color-options button').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'ring-offset-zinc-900', 'ring-white'));
   }
 
   async function addCategory() {
@@ -2351,10 +2428,14 @@
     const exists = state.categories.some(c => c.name.toLowerCase() === name.toLowerCase());
     if (exists) return showError(errorEl, 'Bu kategori zaten var.');
 
+    const finalColor = state.selectedColor === '__custom__'
+      ? (state.selectedCustomHex || '#71717a')
+      : state.selectedColor;
+
     const { data, error } = await supabaseClient.from('categories').insert({
       user_id: currentUser.id,
       name: name,
-      color: state.selectedColor,
+      color: finalColor,
       is_default: false,
     }).select().single();
 
