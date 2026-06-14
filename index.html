@@ -164,8 +164,9 @@
     </button>
 
     <!-- Expandable: all expenses grouped by day -->
-    <div id="spend-history-wrap" class="hidden mb-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-h-96 overflow-y-auto">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Geçmiş Harcamalar</p>
+    <div id="spend-history-wrap" class="hidden mb-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-h-[28rem] overflow-y-auto">
+      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Tüm Harcamalar</p>
+      <p class="text-xs text-zinc-500 mb-3">Düzenlemek için bir harcamaya dokun</p>
       <div id="spend-history-list" class="space-y-4">
         <!-- grouped expenses render here -->
       </div>
@@ -181,7 +182,7 @@
       </button>
     </div>
 
-    <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2">
+    <div id="cards-carousel" onscroll="onCardsScroll()" class="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
       <!-- cards render here -->
     </div>
     <div id="cards-dots" class="flex items-center justify-center gap-1.5 mt-3">
@@ -351,7 +352,68 @@
   </div>
 </div>
 
+<!-- EXPENSE EDIT MODAL -->
+<div id="expense-edit-modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center px-6 z-50">
+  <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto">
+    <h3 class="text-lg font-bold mb-4">Harcamayı Düzenle</h3>
+    <div class="space-y-4">
+
+      <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-2">Tutar</label>
+          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
+            <span class="text-base font-bold text-zinc-500 mr-2">₺</span>
+            <input type="text" inputmode="decimal" id="edit-amount-input" placeholder="0,00" class="w-full bg-transparent text-base font-bold text-white placeholder-zinc-600 focus:outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-2">Tarih</label>
+          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-3 focus-within:border-lime-400 transition-colors h-[48px]">
+            <input type="date" id="edit-date-input" class="bg-transparent text-sm font-medium text-white focus:outline-none [color-scheme:dark]">
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Kategori</label>
+        <select id="edit-category-select" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors">
+          <!-- options render here -->
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Kart</label>
+        <select id="edit-card-select" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors">
+          <!-- options render here -->
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Ödeme Tipi</label>
+        <div id="edit-installment-options" class="flex flex-wrap gap-1.5">
+          <!-- chips render here -->
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-zinc-400 mb-2">Not <span class="text-zinc-600">(opsiyonel)</span></label>
+        <input type="text" id="edit-note-input" placeholder="örn. Haftalık market alışverişi" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+      </div>
+
+      <p id="expense-edit-error" class="hidden text-xs font-medium text-red-400"></p>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="deleteExpenseFromEditModal()" title="Sil" class="w-12 bg-zinc-800 hover:bg-red-400 hover:text-zinc-950 text-white font-semibold rounded-xl py-3 transition-colors flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+      </button>
+      <button onclick="closeExpenseEditModal()" class="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-xl py-3 transition-colors">Vazgeç</button>
+      <button onclick="saveExpenseEdit()" class="flex-1 bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">Kaydet</button>
+    </div>
+  </div>
+</div>
+
 </div><!-- /app-screen -->
+
 
 <script>
   /* ---------------------------------------------------------
@@ -591,7 +653,7 @@
     carousel.classList.toggle('justify-center', state.cards.length === 1);
     carousel.classList.toggle('justify-start', state.cards.length > 1);
 
-    carousel.innerHTML = state.cards.map(card => {
+    carousel.innerHTML = state.cards.map((card, i) => {
       const spent = getCardSpent(card.id);
       const limit = card.limit || 0;
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
@@ -599,7 +661,7 @@
       const borderClass = isSelected ? 'border-lime-400' : 'border-zinc-800 hover:border-zinc-700';
 
       return `
-        <div onclick="showCardDetail('${card.id}')" class="snap-start shrink-0 w-[calc(100%-2rem)] sm:w-[320px] bg-zinc-900 border ${borderClass} rounded-2xl p-5 relative cursor-pointer transition-colors">
+        <div data-card-id="${card.id}" onclick="showCardDetail('${card.id}')" class="snap-center shrink-0 w-full sm:w-[320px] bg-zinc-900 border ${borderClass} rounded-2xl p-5 relative cursor-pointer transition-colors">
           <div class="flex items-start justify-between mb-6">
             <p class="font-semibold text-white pr-2">${escapeHtml(card.name)}</p>
             <button onclick="event.stopPropagation(); deleteCard('${card.id}')" title="Kartı sil" class="w-8 h-5 rounded bg-lime-400/80 hover:bg-red-400 shrink-0 flex items-center justify-center text-zinc-950 text-xs font-bold transition-colors">
@@ -627,19 +689,52 @@
     renderCardDetail();
   }
 
-  // Update active dot based on horizontal scroll position
+  // Lightweight selection update used when swiping the carousel: updates the
+  // highlighted border, dots, and detail panel WITHOUT rebuilding the
+  // carousel's innerHTML (which would reset scroll position mid-swipe).
+  function setActiveCard(cardId) {
+    if (cardId === state.detailCardId) return;
+    state.detailCardId = cardId;
+
+    const carousel = document.getElementById('cards-carousel');
+    Array.from(carousel.children).forEach(child => {
+      const isSelected = child.dataset.cardId === cardId;
+      child.classList.toggle('border-lime-400', isSelected);
+      child.classList.toggle('border-zinc-800', !isSelected);
+      child.classList.toggle('hover:border-zinc-700', !isSelected);
+    });
+
+    const dots = document.getElementById('cards-dots');
+    const selectedIndex = state.cards.findIndex(c => c.id === cardId);
+    Array.from(dots.children).forEach((dot, i) => {
+      dot.classList.toggle('bg-lime-400', i === selectedIndex);
+      dot.classList.toggle('bg-zinc-700', i !== selectedIndex);
+    });
+
+    renderCardDetail();
+  }
+
+  // Update active dot based on horizontal scroll position, and auto-select
+  // the centered card once the swipe settles (no extra tap needed).
+  let cardsScrollTimer = null;
   function onCardsScroll() {
     const carousel = document.getElementById('cards-carousel');
     const dots = document.getElementById('cards-dots').children;
     if (dots.length === 0) return;
 
     const cardWidth = carousel.firstElementChild ? carousel.firstElementChild.offsetWidth + 16 : 1; // +gap
-    const activeIndex = Math.round(carousel.scrollLeft / cardWidth);
+    const activeIndex = Math.max(0, Math.min(state.cards.length - 1, Math.round(carousel.scrollLeft / cardWidth)));
 
     Array.from(dots).forEach((dot, i) => {
       dot.classList.toggle('bg-lime-400', i === activeIndex);
       dot.classList.toggle('bg-zinc-700', i !== activeIndex);
     });
+
+    clearTimeout(cardsScrollTimer);
+    cardsScrollTimer = setTimeout(() => {
+      const card = state.cards[activeIndex];
+      if (card) setActiveCard(card.id);
+    }, 150);
   }
 
   function getCardSpent(cardId) {
@@ -958,6 +1053,135 @@
   }
 
   /* ---------------------------------------------------------
+     ACTIONS: EXPENSE EDIT MODAL
+  --------------------------------------------------------- */
+  let editingExpenseId = null;
+  let editSelectedInstallment = 1;
+
+  function openExpenseEditModal(expenseId) {
+    const exp = state.expenses.find(e => e.id === expenseId);
+    if (!exp) return;
+
+    editingExpenseId = expenseId;
+    editSelectedInstallment = exp.installment || 1;
+
+    document.getElementById('expense-edit-error').classList.add('hidden');
+
+    // Amount (use comma as decimal separator to match input style)
+    const amountStr = exp.amount.toFixed(2).replace('.', ',');
+    document.getElementById('edit-amount-input').value = amountStr;
+
+    // Date
+    document.getElementById('edit-date-input').value = exp.expenseDate;
+    document.getElementById('edit-date-input').max = todayDateString();
+
+    // Note
+    document.getElementById('edit-note-input').value = exp.note || '';
+
+    // Category options
+    const catSelect = document.getElementById('edit-category-select');
+    catSelect.innerHTML = state.categories.map(c =>
+      `<option value="${c.id}" ${c.id === exp.categoryId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+    ).join('');
+    if (!exp.categoryId || !state.categories.find(c => c.id === exp.categoryId)) {
+      catSelect.insertAdjacentHTML('afterbegin', '<option value="" selected>Kategori silindi</option>');
+    }
+
+    // Card options
+    const cardSelect = document.getElementById('edit-card-select');
+    cardSelect.innerHTML = state.cards.map(c =>
+      `<option value="${c.id}" ${c.id === exp.cardId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
+    ).join('');
+    if (!exp.cardId || !state.cards.find(c => c.id === exp.cardId)) {
+      cardSelect.insertAdjacentHTML('afterbegin', '<option value="" selected>Kart silindi</option>');
+    }
+
+    renderEditInstallmentOptions();
+    document.getElementById('expense-edit-modal').classList.remove('hidden');
+  }
+
+  function closeExpenseEditModal() {
+    editingExpenseId = null;
+    document.getElementById('expense-edit-modal').classList.add('hidden');
+  }
+
+  function renderEditInstallmentOptions() {
+    const container = document.getElementById('edit-installment-options');
+    container.innerHTML = INSTALLMENT_OPTIONS.map(n => {
+      const isActive = editSelectedInstallment === n;
+      const label = n === 1 ? 'Tek Çekim' : `${n} Taksit`;
+      const activeClasses = 'bg-lime-400 text-zinc-950';
+      const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+      return `
+        <button type="button" onclick="selectEditInstallment(${n})" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? activeClasses : inactiveClasses}">
+          ${label}
+        </button>
+      `;
+    }).join('');
+  }
+
+  function selectEditInstallment(n) {
+    editSelectedInstallment = n;
+    renderEditInstallmentOptions();
+  }
+
+  async function saveExpenseEdit() {
+    const errorEl = document.getElementById('expense-edit-error');
+    errorEl.classList.add('hidden');
+
+    if (!editingExpenseId) return;
+
+    const rawAmount = document.getElementById('edit-amount-input').value.trim();
+    const amount = parseFloat(rawAmount.replace(',', '.'));
+    if (!rawAmount || isNaN(amount) || amount <= 0) {
+      return showError(errorEl, 'Lütfen geçerli bir tutar gir.');
+    }
+
+    const categoryId = document.getElementById('edit-category-select').value || null;
+    const cardId = document.getElementById('edit-card-select').value || null;
+    if (!cardId) {
+      return showError(errorEl, 'Lütfen bir kart seç.');
+    }
+
+    const dateValue = document.getElementById('edit-date-input').value || todayDateString();
+    const note = document.getElementById('edit-note-input').value.trim();
+
+    const { error } = await supabaseClient.from('expenses').update({
+      amount: amount,
+      category_id: categoryId,
+      card_id: cardId,
+      installment: editSelectedInstallment,
+      note: note,
+      expense_date: dateValue,
+    }).eq('id', editingExpenseId);
+
+    if (error) {
+      return showError(errorEl, 'Kaydedilemedi: ' + error.message);
+    }
+
+    const exp = state.expenses.find(e => e.id === editingExpenseId);
+    if (exp) {
+      exp.amount = amount;
+      exp.categoryId = categoryId;
+      exp.cardId = cardId;
+      exp.installment = editSelectedInstallment;
+      exp.note = note;
+      exp.expenseDate = dateValue;
+    }
+    state.expenses.sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate));
+
+    closeExpenseEditModal();
+    renderAll();
+  }
+
+  async function deleteExpenseFromEditModal() {
+    if (!editingExpenseId) return;
+    if (!confirm('Bu harcamayı silmek istediğine emin misin?')) return;
+    await deleteExpense(editingExpenseId);
+    closeExpenseEditModal();
+  }
+
+  /* ---------------------------------------------------------
      ACTIONS: CARD MODAL
   --------------------------------------------------------- */
   function openCardModal() {
@@ -1084,13 +1308,13 @@
         }
 
         return `
-          <div class="flex items-center justify-between gap-3 py-2">
+          <button type="button" onclick="openExpenseEditModal('${exp.id}')" class="w-full flex items-center justify-between gap-3 py-2.5 text-left hover:bg-zinc-800/50 rounded-lg px-2 -mx-2 transition-colors">
             <div>
               <p class="text-sm font-medium text-white">${titleText}</p>
               <p class="text-xs text-zinc-500 mt-0.5">${catName} · ${cardName}${installmentText}</p>
             </div>
-            <p class="text-sm font-bold text-white text-right">${amountDisplay}</p>
-          </div>
+            <p class="text-sm font-bold text-white text-right shrink-0">${amountDisplay}</p>
+          </button>
         `;
       }).join('');
 
@@ -1112,8 +1336,7 @@
      CARD DETAIL (inline on Cards page)
   --------------------------------------------------------- */
   function showCardDetail(cardId) {
-    state.detailCardId = cardId;
-    renderCards();
+    setActiveCard(cardId);
   }
 
   function renderCardDetail() {
@@ -1183,7 +1406,7 @@
     }
     wrap.classList.remove('hidden');
 
-    container.innerHTML = rows.map(row => {
+    container.innerHTML = rows.map((row, idx) => {
       const itemsHtml = row.items.map(item => `
         <div class="flex items-center justify-between text-xs text-zinc-400">
           <span>${item.label} · ${item.installmentNo}/${item.total} taksit</span>
@@ -1191,16 +1414,31 @@
         </div>
       `).join('');
 
+      const detailId = `upcoming-detail-${cardId}-${idx}`;
+      const chevronId = `upcoming-chevron-${cardId}-${idx}`;
+
       return `
         <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-          <div class="flex items-center justify-between mb-1.5">
-            <p class="text-sm font-semibold text-white">${monthNames[row.month]} ${row.year}</p>
+          <button type="button" onclick="toggleUpcomingMonth('${detailId}', '${chevronId}')" class="w-full flex items-center justify-between gap-2">
+            <div class="flex items-center gap-1.5">
+              <svg id="${chevronId}" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-zinc-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <p class="text-sm font-semibold text-white">${monthNames[row.month]} ${row.year}</p>
+              <span class="text-xs text-zinc-500">· ${row.items.length} ödeme</span>
+            </div>
             <p class="text-sm font-bold text-lime-400">${formatCurrency(row.monthTotal)}</p>
-          </div>
-          <div class="space-y-1">${itemsHtml}</div>
+          </button>
+          <div id="${detailId}" class="hidden space-y-1 mt-2 pt-2 border-t border-zinc-800">${itemsHtml}</div>
         </div>
       `;
     }).join('');
+  }
+
+  function toggleUpcomingMonth(detailId, chevronId) {
+    const detail = document.getElementById(detailId);
+    const chevron = document.getElementById(chevronId);
+    const isHidden = detail.classList.contains('hidden');
+    detail.classList.toggle('hidden');
+    chevron.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
   }
 
   function renderCardDetailExpenses(cardId) {
@@ -1231,6 +1469,7 @@
     list.innerHTML = sortedDates.map(dateKey => {
       const dayExpenses = groups[dateKey];
       const dayTotal = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
+      const isToday = dateKey === todayDateString();
 
       const rows = dayExpenses.map(exp => {
         const cat = state.categories.find(c => c.id === exp.categoryId);
@@ -1246,26 +1485,43 @@
         }
 
         return `
-          <div class="flex items-center justify-between gap-3 py-2">
+          <button type="button" onclick="openExpenseEditModal('${exp.id}')" class="w-full flex items-center justify-between gap-3 py-2.5 text-left hover:bg-zinc-800/50 rounded-lg px-2 -mx-2 transition-colors">
             <div>
               <p class="text-sm font-medium text-white">${titleText}</p>
               <p class="text-xs text-zinc-500 mt-0.5">${catName}${installmentText}</p>
             </div>
-            <div class="flex items-center gap-2">
-              <p class="text-sm font-bold text-white text-right">${amountDisplay}</p>
-              <button onclick="deleteExpenseFromDetail('${exp.id}', '${cardId}')" title="Sil" class="text-zinc-500 hover:text-red-400 transition-colors text-sm leading-none">✕</button>
-            </div>
-          </div>
+            <p class="text-sm font-bold text-white text-right shrink-0">${amountDisplay}</p>
+          </button>
         `;
       }).join('');
 
+      const groupClasses = isToday
+        ? 'bg-lime-400/5 border border-lime-400/30 rounded-xl p-3'
+        : '';
+
+      const headerClasses = isToday
+        ? 'flex items-center justify-between mb-1.5'
+        : 'flex items-center justify-between mb-1';
+
+      const labelClasses = isToday
+        ? 'text-xs font-bold text-lime-400 uppercase tracking-widest'
+        : 'text-xs font-semibold text-zinc-400';
+
+      const totalClasses = isToday
+        ? 'text-xs font-bold text-lime-400'
+        : 'text-xs font-semibold text-zinc-400';
+
+      const dividerClasses = isToday
+        ? 'divide-y divide-zinc-800'
+        : 'divide-y divide-zinc-800 border-t border-zinc-800';
+
       return `
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <p class="text-xs font-semibold text-zinc-400">${formatDateLabel(dateKey)}</p>
-            <p class="text-xs font-semibold text-zinc-400">${formatCurrency(dayTotal)}</p>
+        <div class="${groupClasses}">
+          <div class="${headerClasses}">
+            <p class="${labelClasses}">${formatDateLabel(dateKey)}</p>
+            <p class="${totalClasses}">${formatCurrency(dayTotal)}</p>
           </div>
-          <div class="divide-y divide-zinc-800 border-t border-zinc-800">
+          <div class="${dividerClasses}">
             ${rows}
           </div>
         </div>
