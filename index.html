@@ -1023,11 +1023,11 @@
 
     // ---------------------------------------------------------------
     // Full pie chart with each slice's name + percentage placed outside
-    // the circle, connected by a smooth curved leader line. Labels are
-    // split left/right based on where their slice sits and stacked
+    // the circle, connected by a simple straight leader line (a short
+    // radial step out, then a horizontal segment to the label). Labels
+    // are split left/right based on where their slice sits and stacked
     // vertically (sorted top-to-bottom) so they line up nicely and
-    // never overlap. Curves bow outward first, so they never cross
-    // through the pie itself.
+    // never overlap or cross each other.
     // ---------------------------------------------------------------
     const r = 100; // pie radius
 
@@ -1082,7 +1082,7 @@
     const chartH = Math.max(sideHeight, r * 2) + 24;
     const cy = chartH / 2;
 
-    const labelDotGap = 14;   // gap from pie edge to where the curve starts widening
+    const stepOut = 26;        // how far the line steps straight out from the pie edge
     const labelLineX = r + 46; // x distance (from center) where the leader line ends, label begins
     const cx = labelLineX + 110; // half-width reserved for labels on each side
     const totalW = cx * 2;
@@ -1096,18 +1096,16 @@
         const textX = lineEndX + sign * 8;
         const textAnchor = isRight ? 'start' : 'end';
 
-        // Curve: start at pie edge, bow outward along the radial
-        // direction, then sweep to the label's height.
+        // Straight elbow line: pie edge -> step outward (same y as edge) -> label height
         const p0x = cx + item.edgeX;
         const p0y = cy + item.edgeY;
-        const bowX = cx + sign * (r + labelDotGap + 30);
-        const bowY = p0y;
+        const elbowX = p0x + sign * stepOut;
 
         const name = item.name.length > 13 ? item.name.slice(0, 12) + '…' : item.name;
 
         return `
-          <path d="M ${p0x} ${p0y} Q ${bowX} ${bowY}, ${lineEndX} ${labelY}"
-            fill="none" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" />
+          <polyline points="${p0x},${p0y} ${elbowX},${p0y} ${lineEndX},${labelY}"
+            fill="none" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" stroke-linejoin="round" />
           <text x="${textX}" y="${labelY - 5}" text-anchor="${textAnchor}" font-size="13" font-weight="700" fill="#ffffff">${escapeHtml(name)}</text>
           <text x="${textX}" y="${labelY + 12}" text-anchor="${textAnchor}" font-size="12.5" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
         `;
