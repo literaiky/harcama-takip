@@ -28,18 +28,38 @@
     margin: 0;
   }
 
-  /* The page itself never scrolls/bounces (feels like a native app, not a
-     browser tab). Only this inner container scrolls, and its own bounce
-     is contained so it doesn't chain to the page. */
+  /* #app-screen is a flex column filling the dynamic viewport: the content
+     area scrolls, and the bottom nav is a normal flex item (not fixed),
+     so it always sits exactly at the bottom of the screen with no gap. */
   #auth-screen, #app-screen {
     height: 100%;
     height: 100dvh;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+  #app-screen {
+    display: flex;
+    flex-direction: column;
+  }
+  #app-screen.hidden, #auth-screen.hidden {
+    display: none;
+  }
+  #app-scroll, #auth-screen {
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
-    padding-top: env(safe-area-inset-top);
     box-sizing: border-box;
+  }
+  #app-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+  #auth-screen {
+    padding-top: env(safe-area-inset-top);
+  }
+  #app-screen > #app-scroll:first-child {
+    padding-top: env(safe-area-inset-top);
   }
 
   /* Prevent iOS Safari from auto-zooming the page when focusing form fields
@@ -93,7 +113,7 @@
 <!-- APP SCREEN -->
 <div id="app-screen" class="hidden">
 
-<div class="max-w-5xl mx-auto px-4 pt-5 pb-32">
+<div id="app-scroll" class="max-w-5xl mx-auto px-4 pt-5 pb-6">
 
   <!-- Hidden elements kept for JS references -->
   <p class="hidden" id="header-month"></p>
@@ -375,7 +395,7 @@
 </div>
 
 <!-- BOTTOM NAVIGATION -->
-<nav class="fixed bottom-0 left-0 right-0 bg-zinc-950/95 backdrop-blur border-t border-zinc-800 z-40" style="padding-bottom: env(safe-area-inset-bottom);">
+<nav class="bg-zinc-950/95 backdrop-blur border-t border-zinc-800 z-40 shrink-0" style="padding-bottom: env(safe-area-inset-bottom);">
   <div class="max-w-5xl mx-auto px-6 flex items-center justify-around py-3">
     <button onclick="switchPage('home')" data-nav="home" class="nav-btn flex flex-col items-center gap-1 text-xs font-medium transition-colors">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1h3a1 1 0 001-1V10M9 21h6"/></svg>
@@ -974,13 +994,13 @@
 
     // Build SVG donut chart with category + percentage labels placed
     // around the ring, connected by short leader lines.
-    const radius = 66;
-    const strokeWidth = 24;
+    const radius = 84;
+    const strokeWidth = 30;
     const circumference = 2 * Math.PI * radius;
     const lineStart = radius + strokeWidth / 2 + 4;  // leader line starts just outside the ring
-    const lineEnd = lineStart + 10;                  // leader line ends here, label sits after this
-    const labelGap = 4;                              // gap between leader line end and label text
-    const margin = 74;                               // room around the ring for labels/lines
+    const lineEnd = lineStart + 12;                  // leader line ends here, label sits after this
+    const labelGap = 5;                              // gap between leader line end and label text
+    const margin = 88;                               // room around the ring for labels/lines
     const center = radius + strokeWidth / 2 + margin;
     const size = center * 2;
 
@@ -1029,13 +1049,13 @@
       const tx = x2 + (isRight ? labelGap : isLeft ? -labelGap : 0);
       const ty = y2 + (anchor === 'middle' ? (sin > 0 ? 12 : -4) : 0);
 
-      const name = item.name.length > 8 ? item.name.slice(0, 7) + '…' : item.name;
+      const name = item.name.length > 9 ? item.name.slice(0, 8) + '…' : item.name;
 
       return `
         <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" />
         <g transform="translate(${tx} ${ty})">
-          <text text-anchor="${anchor}" dy="-2" font-size="10" font-weight="700" fill="${colorHex(item.color)}">%${item.pct.toFixed(1)}</text>
-          <text text-anchor="${anchor}" dy="11" font-size="9" font-weight="500" fill="#a1a1aa">${escapeHtml(name)}</text>
+          <text text-anchor="${anchor}" dy="-3" font-size="13" font-weight="700" fill="${colorHex(item.color)}">%${item.pct.toFixed(1)}</text>
+          <text text-anchor="${anchor}" dy="13" font-size="11" font-weight="500" fill="#a1a1aa">${escapeHtml(name)}</text>
         </g>
       `;
     }).join('');
