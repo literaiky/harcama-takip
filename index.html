@@ -369,23 +369,18 @@
   <!-- PAGE: STATS -->
   <section id="page-stats" class="hidden max-w-5xl mx-auto w-full">
 
-    <!-- Pie chart -->
+    <!-- Pie chart + category breakdown -->
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
       <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Toplam Harcama</p>
       <p id="stats-total" class="text-2xl font-bold text-white mb-5">₺0,00</p>
 
       <div id="stats-chart-wrap" class="flex items-center justify-center w-full">
-        <!-- SVG donut chart with category + percentage labels renders here -->
+        <!-- SVG pie chart + category breakdown renders here -->
       </div>
       <p id="stats-empty" class="hidden text-sm text-zinc-500 text-center py-4">
         Henüz harcama bulunmuyor.
       </p>
-    </div>
-
-    <!-- Category breakdown -->
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-3">Kategori Dağılımı</p>
-      <div id="stats-breakdown" class="space-y-3">
+      <div id="stats-breakdown" class="space-y-3 mt-5">
         <!-- category percentage rows render here -->
       </div>
     </div>
@@ -1053,20 +1048,9 @@
     }).join('');
 
     chartWrap.innerHTML = `
-      <div class="flex flex-col sm:flex-row items-center gap-6 w-full">
-        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="shrink-0" style="max-width:200px; height:auto;">
-          ${slices}
-        </svg>
-        <div class="w-full space-y-2">
-          ${items.map(item => `
-            <div class="flex items-center gap-2.5 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2">
-              <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${colorHex(item.color)}"></span>
-              <span class="text-sm font-medium text-white truncate flex-1">${escapeHtml(item.name)}</span>
-              <span class="text-sm font-bold shrink-0" style="color:${colorHex(item.color)}">%${item.pct.toFixed(1)}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="max-width:200px; height:auto;">
+        ${slices}
+      </svg>
     `;
 
     // Breakdown list — every category, in order, with progress bars
