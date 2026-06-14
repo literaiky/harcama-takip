@@ -103,8 +103,36 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 8px; }
 
-  .nav-btn { color: #71717a; }
-  .nav-btn.active { color: #a3e635; }
+  /* Bottom nav: active tab gets a soft pill background, not just a color change */
+  .nav-btn {
+    color: #71717a;
+    position: relative;
+    border-radius: 0.875rem;
+    padding: 0.375rem 0.5rem;
+    transition: color 0.15s ease, background-color 0.15s ease;
+  }
+  .nav-btn.active {
+    color: #a3e635;
+    background-color: rgba(163, 230, 53, 0.08);
+  }
+
+  /* Section label: small uppercase eyebrow used to head every block */
+  .section-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #71717a;
+  }
+
+  /* Secondary surface: a slightly darker inset panel inside a card */
+  .surface-inset {
+    background-color: #0f0f11;
+    border: 1px solid #27272a;
+  }
+
+  /* Tabular figures for any amount so columns of numbers align */
+  .tnum { font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body class="bg-zinc-950 text-white min-h-screen">
@@ -120,11 +148,11 @@
     <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">E-posta</label>
-        <input type="email" id="auth-email" placeholder="ornek@mail.com" autocomplete="email" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        <input type="email" id="auth-email" placeholder="ornek@mail.com" autocomplete="email" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Şifre</label>
-        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
 
       <p id="auth-error" class="hidden text-xs font-medium text-red-400"></p>
@@ -154,40 +182,38 @@
   <section id="page-home" class="max-w-5xl mx-auto w-full">
 
     <!-- Hero ledger summary -->
-    <div class="relative bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 mb-3 overflow-hidden">
-      <div class="absolute left-0 top-0 bottom-0 w-1 bg-lime-400"></div>
-      <p class="text-[10px] font-semibold tracking-[0.2em] text-zinc-500 uppercase mb-1">Bu Ay Toplam</p>
-      <div class="flex items-end justify-between gap-3">
-        <p class="text-3xl font-bold text-white leading-none tracking-tight" id="home-month-total">₺0,00</p>
-        <div class="text-right shrink-0">
-          <p class="text-[10px] font-semibold tracking-[0.2em] text-zinc-500 uppercase mb-0.5">Bugün</p>
-          <p class="text-base font-bold text-lime-400 leading-none" id="home-today-total">₺0,00</p>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-4">
+      <div class="flex items-end justify-between gap-4">
+        <div class="min-w-0">
+          <p class="section-label mb-2">Bu Ay Toplam</p>
+          <p class="text-[2rem] font-bold text-white leading-none tracking-tight tnum" id="home-month-total">₺0,00</p>
+        </div>
+        <div class="text-right shrink-0 pb-0.5">
+          <p class="section-label mb-2">Bugün</p>
+          <p class="text-lg font-bold text-lime-400 leading-none tnum" id="home-today-total">₺0,00</p>
         </div>
       </div>
     </div>
 
     <!-- NEW EXPENSE FORM -->
     <section class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-      <h2 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-lime-400"></span>
-        Yeni Harcama
-      </h2>
+      <h2 class="section-label mb-4">Yeni Harcama</h2>
 
-      <div class="space-y-3">
+      <div class="space-y-4">
 
         <!-- Amount: the hero input -->
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Tutar</label>
-          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
+          <div class="flex items-center surface-inset rounded-xl px-4 py-3.5 focus-within:border-lime-400 transition-colors">
             <span class="text-2xl font-bold text-zinc-500 mr-2">₺</span>
-            <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-2xl font-bold text-white placeholder-zinc-600 focus:outline-none">
+            <input type="text" inputmode="decimal" id="amount-input" placeholder="0,00" class="w-full bg-transparent text-2xl font-bold text-white placeholder-zinc-600 focus:outline-none tnum">
           </div>
         </div>
 
         <!-- Date -->
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Tarih</label>
-          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors h-[44px]">
+          <div class="flex items-center surface-inset rounded-xl px-3 py-2.5 focus-within:border-lime-400 transition-colors h-[44px]">
             <input type="date" id="date-input" class="bg-transparent text-sm font-medium text-white focus:outline-none [color-scheme:dark] w-full">
           </div>
         </div>
@@ -196,7 +222,7 @@
           <!-- Category -->
           <div class="relative">
             <label class="block text-xs font-medium text-zinc-400 mb-1.5">Kategori</label>
-            <button id="category-trigger" onclick="toggleDropdown('category-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-left hover:border-zinc-700 transition-colors">
+            <button id="category-trigger" onclick="toggleDropdown('category-dropdown')" class="w-full flex items-center justify-between surface-inset rounded-xl px-3 py-2.5 text-left hover:border-zinc-700 transition-colors">
               <span id="category-label" class="flex items-center gap-2 text-sm font-medium text-white">
                 <span class="text-zinc-500">Kategori seç</span>
               </span>
@@ -210,7 +236,7 @@
           <!-- Card -->
           <div class="relative">
             <label class="block text-xs font-medium text-zinc-400 mb-1.5">Kart</label>
-            <button id="card-trigger" onclick="toggleDropdown('card-dropdown')" class="w-full flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-left hover:border-zinc-700 transition-colors">
+            <button id="card-trigger" onclick="toggleDropdown('card-dropdown')" class="w-full flex items-center justify-between surface-inset rounded-xl px-3 py-2.5 text-left hover:border-zinc-700 transition-colors">
               <span id="card-label" class="text-sm font-medium text-zinc-500">Kart seç</span>
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
@@ -227,7 +253,7 @@
             <!-- chips render here -->
           </div>
           <div id="installment-custom-wrap" class="hidden mt-2">
-            <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5">
+            <div class="flex items-center justify-between surface-inset rounded-xl px-3 py-2.5">
               <span class="text-xs font-medium text-zinc-400">Taksit Sayısı</span>
               <div class="flex items-center gap-3">
                 <button type="button" onclick="adjustCustomInstallment(-1)" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-white text-lg font-bold flex items-center justify-center transition-colors leading-none">−</button>
@@ -241,12 +267,12 @@
         <!-- Note -->
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-1.5">Not <span class="text-zinc-600">(opsiyonel)</span></label>
-          <input type="text" id="note-input" placeholder="örn. Haftalık market alışverişi" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+          <input type="text" id="note-input" placeholder="örn. Haftalık market alışverişi" class="w-full surface-inset rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
         </div>
 
         <p id="form-error" class="hidden text-xs font-medium text-red-400"></p>
 
-        <button onclick="saveExpense()" class="w-full bg-lime-400 hover:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3 transition-colors">
+        <button onclick="saveExpense()" class="w-full bg-lime-400 hover:bg-lime-300 active:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3.5 transition-colors">
           Harcamayı Kaydet
         </button>
 
@@ -261,14 +287,14 @@
   <section id="page-cards" class="hidden max-w-5xl mx-auto w-full">
 
     <!-- Month Total (clickable to expand history) -->
-    <button onclick="toggleSpendHistory()" class="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl px-4 py-4 mb-3 flex items-center justify-between transition-colors">
+    <button onclick="toggleSpendHistory()" class="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl px-5 py-4 mb-4 flex items-center justify-between transition-colors">
       <div class="flex items-center gap-3 text-left">
-        <div class="w-10 h-10 rounded-xl bg-lime-400/10 flex items-center justify-center shrink-0">
+        <div class="w-11 h-11 rounded-xl bg-lime-400/10 flex items-center justify-center shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h2m4 0h4M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
         </div>
         <div>
-          <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Bu Ay Ödenecek</p>
-          <p class="text-xl font-bold text-white" id="month-total">₺0,00</p>
+          <p class="section-label mb-0.5">Bu Ay Ödenecek</p>
+          <p class="text-xl font-bold text-white tnum" id="month-total">₺0,00</p>
         </div>
       </div>
       <div class="flex items-center gap-1.5 text-zinc-500 shrink-0">
@@ -278,9 +304,9 @@
     </button>
 
     <!-- Expandable: all expenses grouped by day -->
-    <div id="spend-history-wrap" class="hidden mb-3 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-h-[28rem] overflow-y-auto" style="overscroll-behavior: contain;">
+    <div id="spend-history-wrap" class="hidden mb-4 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 max-h-[28rem] overflow-y-auto" style="overscroll-behavior: contain;">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Tüm Harcamalar</p>
+        <p class="section-label">Tüm Harcamalar</p>
       </div>
       <div id="spend-history-list" class="space-y-4">
         <!-- grouped expenses render here -->
@@ -290,8 +316,8 @@
       </p>
     </div>
 
-    <div class="flex items-center justify-between mb-3 mt-5">
-      <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kartlarım</h2>
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="section-label">Kartlarım</h2>
       <button onclick="openCardModal()" class="text-sm font-medium text-lime-400 hover:text-lime-300 transition-colors flex items-center gap-1">
         <span class="text-lg leading-none">+</span> Kart Ekle
       </button>
@@ -308,19 +334,19 @@
     </p>
 
     <!-- Selected card detail (inline) -->
-    <div id="card-detail-wrap" class="hidden mt-5 space-y-3">
+    <div id="card-detail-wrap" class="hidden mt-5 space-y-4">
 
       <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-        <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Bu Ay Ödenecek</p>
-        <p id="card-detail-spent" class="text-2xl font-bold text-white mb-3"></p>
-        <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
+        <p class="section-label mb-2">Bu Ay Ödenecek</p>
+        <p id="card-detail-spent" class="text-2xl font-bold text-white mb-4 tnum"></p>
+        <div class="flex items-center justify-between text-xs text-zinc-400 mb-2 tnum">
           <span id="card-detail-limit"></span>
           <span id="card-detail-pct"></span>
         </div>
         <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-          <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full"></div>
+          <div id="card-detail-bar" class="h-full bg-lime-400 rounded-full transition-all"></div>
         </div>
-        <div id="card-detail-statement" class="hidden items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800 text-xs text-zinc-400">
+        <div id="card-detail-statement" class="hidden items-center gap-1.5 mt-4 pt-4 border-t border-zinc-800 text-xs text-zinc-400">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
           <span id="card-detail-statement-text"></span>
         </div>
@@ -335,7 +361,7 @@
             </div>
             <div>
               <p class="text-sm font-semibold text-white">Gelecek Ödemeler</p>
-              <p id="card-detail-upcoming-summary" class="text-xs text-zinc-500"></p>
+              <p id="card-detail-upcoming-summary" class="text-xs text-zinc-500 tnum"></p>
             </div>
           </div>
           <svg id="card-detail-upcoming-chevron" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-zinc-500 transition-transform shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -347,7 +373,7 @@
 
       <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
         <div class="flex items-center justify-between mb-3">
-          <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase">Harcamalar</p>
+          <p class="section-label">Harcamalar</p>
         </div>
         <div id="card-detail-list" class="space-y-4">
           <!-- grouped expenses render here -->
@@ -366,9 +392,9 @@
   <section id="page-stats" class="hidden max-w-5xl mx-auto w-full">
 
     <!-- Pie chart + category breakdown -->
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 mb-6">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Toplam Harcama</p>
-      <p id="stats-total" class="text-2xl font-bold text-white mb-5">₺0,00</p>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 mb-4">
+      <p class="section-label mb-1">Toplam Harcama</p>
+      <p id="stats-total" class="text-2xl font-bold text-white mb-5 tnum">₺0,00</p>
 
       <div id="stats-chart-wrap" class="flex items-center justify-center w-full">
         <!-- SVG pie chart + category breakdown renders here -->
@@ -382,15 +408,15 @@
     </div>
 
     <!-- Categories management -->
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Kategoriler</h2>
-        <button onclick="openCategoryModal()" class="text-lime-400 hover:text-lime-300 transition-colors text-lg leading-none">+</button>
+        <h2 class="section-label">Kategoriler</h2>
+        <button onclick="openCategoryModal()" class="w-7 h-7 rounded-full bg-zinc-800 hover:bg-lime-400 hover:text-zinc-950 text-lime-400 transition-colors text-lg leading-none flex items-center justify-center">+</button>
       </div>
       <div id="categories-list" class="flex flex-wrap gap-2">
         <!-- category chips render here -->
       </div>
-      <p id="categories-note" class="hidden text-xs text-zinc-500 mt-3 flex items-center gap-1.5">
+      <p id="categories-note" class="hidden text-xs text-zinc-500 mt-4 pt-4 border-t border-zinc-800 flex items-center gap-1.5">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-12V7a4 4 0 10-8 0v2"/></svg>
         Kilit ikonlu kategoriler baz kategorilerdir ve silinemez.
       </p>
@@ -402,9 +428,9 @@
   <!-- PAGE: ACCOUNT -->
   <section id="page-account" class="hidden max-w-5xl mx-auto w-full">
 
-    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-      <p class="text-xs font-semibold tracking-widest text-zinc-500 uppercase mb-1">Hesap</p>
-      <p id="account-email" class="text-lg font-bold text-white mb-6"></p>
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+      <p class="section-label mb-2">Hesap</p>
+      <p id="account-email" class="text-lg font-bold text-white mb-6 truncate"></p>
 
       <button onclick="handleLogout()" class="w-full bg-zinc-800 hover:bg-red-400 hover:text-zinc-950 text-white font-semibold rounded-xl py-3 transition-colors">
         Oturumu Kapat
@@ -445,15 +471,15 @@
     <div class="space-y-4">
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kart Adı</label>
-        <input type="text" id="card-name-input" placeholder="örn. Bonus Card" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        <input type="text" id="card-name-input" placeholder="örn. Bonus Card" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kart Limiti (₺)</label>
-        <input type="text" inputmode="decimal" id="card-limit-input" placeholder="örn. 15000" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        <input type="text" inputmode="decimal" id="card-limit-input" placeholder="örn. 15000" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Hesap Kesim Tarihi <span class="text-zinc-600">(opsiyonel, ayın günü)</span></label>
-        <select id="card-statement-day-input" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors [color-scheme:dark]">
+        <select id="card-statement-day-input" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors [color-scheme:dark]">
           <option value="">Belirtilmedi</option>
           <!-- 1-31 options render here -->
         </select>
@@ -477,7 +503,7 @@
     <div class="space-y-4">
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kategori Adı</label>
-        <input type="text" id="category-name-input" placeholder="örn. Spor" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        <input type="text" id="category-name-input" placeholder="örn. Spor" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Renk</label>
@@ -503,14 +529,14 @@
       <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-2">Tutar</label>
-          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
+          <div class="flex items-center surface-inset rounded-xl px-4 py-3 focus-within:border-lime-400 transition-colors">
             <span class="text-base font-bold text-zinc-500 mr-2">₺</span>
             <input type="text" inputmode="decimal" id="edit-amount-input" placeholder="0,00" class="w-full bg-transparent text-base font-bold text-white placeholder-zinc-600 focus:outline-none">
           </div>
         </div>
         <div>
           <label class="block text-xs font-medium text-zinc-400 mb-2">Tarih</label>
-          <div class="flex items-center bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-3 focus-within:border-lime-400 transition-colors h-[48px]">
+          <div class="flex items-center surface-inset rounded-xl px-3 py-3 focus-within:border-lime-400 transition-colors h-[48px]">
             <input type="date" id="edit-date-input" class="bg-transparent text-sm font-medium text-white focus:outline-none [color-scheme:dark]">
           </div>
         </div>
@@ -518,14 +544,14 @@
 
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kategori</label>
-        <select id="edit-category-select" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors">
+        <select id="edit-category-select" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors">
           <!-- options render here -->
         </select>
       </div>
 
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Kart</label>
-        <select id="edit-card-select" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors">
+        <select id="edit-card-select" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-lime-400 transition-colors">
           <!-- options render here -->
         </select>
       </div>
@@ -536,7 +562,7 @@
           <!-- chips render here -->
         </div>
         <div id="edit-installment-custom-wrap" class="hidden mt-2">
-          <div class="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5">
+          <div class="flex items-center justify-between surface-inset rounded-xl px-3 py-2.5">
             <span class="text-xs font-medium text-zinc-400">Taksit Sayısı</span>
             <div class="flex items-center gap-3">
               <button type="button" onclick="adjustEditCustomInstallment(-1)" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 text-white text-lg font-bold flex items-center justify-center transition-colors leading-none">−</button>
@@ -549,7 +575,7 @@
 
       <div>
         <label class="block text-xs font-medium text-zinc-400 mb-2">Not <span class="text-zinc-600">(opsiyonel)</span></label>
-        <input type="text" id="edit-note-input" placeholder="örn. Haftalık market alışverişi" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        <input type="text" id="edit-note-input" placeholder="örn. Haftalık market alışverişi" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
       </div>
 
       <p id="expense-edit-error" class="hidden text-xs font-medium text-red-400"></p>
@@ -832,27 +858,29 @@
       const limit = card.limit || 0;
       const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
       const isSelected = card.id === state.detailCardId;
-      const borderClass = isSelected ? 'border-lime-400' : 'border-zinc-800 hover:border-zinc-700';
+      const ringClass = isSelected ? 'ring-2 ring-lime-400 border-transparent' : 'border border-zinc-800 hover:border-zinc-700';
       const statementInfo = getStatementCountdownText(card.statementDay);
+      const barColor = pct >= 90 ? '#f87171' : '#a3e635';
 
       return `
-        <div data-card-id="${card.id}" onclick="showCardDetail('${card.id}')" class="snap-center shrink-0 w-full sm:w-[320px] bg-zinc-900 border ${borderClass} rounded-2xl p-5 relative cursor-pointer transition-colors">
-          <div class="flex items-start justify-between mb-6">
-            <p class="font-semibold text-white pr-2">${escapeHtml(card.name)}</p>
-            <button onclick="event.stopPropagation(); openCardEditModal('${card.id}')" title="Kartı düzenle" class="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-lime-400 hover:text-zinc-950 shrink-0 flex items-center justify-center text-zinc-300 transition-colors">
+        <div data-card-id="${card.id}" onclick="showCardDetail('${card.id}')" class="snap-center shrink-0 w-full sm:w-[320px] rounded-2xl p-5 relative cursor-pointer transition-all ${ringClass}" style="background: linear-gradient(155deg, #1c1c20 0%, #131316 100%);">
+          <div class="flex items-start justify-between mb-5">
+            <p class="font-semibold text-white pr-2 truncate">${escapeHtml(card.name)}</p>
+            <button onclick="event.stopPropagation(); openCardEditModal('${card.id}')" title="Kartı düzenle" class="w-8 h-8 rounded-lg bg-zinc-800/80 hover:bg-lime-400 hover:text-zinc-950 shrink-0 flex items-center justify-center text-zinc-400 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
             </button>
           </div>
-          <p class="text-xl font-bold text-white mb-2">${formatCurrency(spent)}</p>
-          <div class="flex items-center justify-between text-xs text-zinc-400 mb-2">
+          <p class="section-label mb-1">Bu Ay Ödenecek</p>
+          <p class="text-2xl font-bold text-white mb-4 tnum">${formatCurrency(spent)}</p>
+          <div class="flex items-center justify-between text-xs text-zinc-400 mb-2 tnum">
             <span>Limit ${formatCurrency(limit)}</span>
-            <span>%${Math.round(pct)}</span>
+            <span class="font-semibold" style="color:${barColor}">%${Math.round(pct)}</span>
           </div>
           <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-            <div class="h-full bg-lime-400 rounded-full" style="width: ${pct}%"></div>
+            <div class="h-full rounded-full transition-all" style="width: ${pct}%; background:${barColor}"></div>
           </div>
           ${statementInfo ? `
-            <div class="flex items-center gap-1.5 mt-3 text-xs text-zinc-500">
+            <div class="flex items-center gap-1.5 mt-4 pt-4 border-t border-zinc-800 text-xs text-zinc-500">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               ${statementInfo}
             </div>
@@ -880,7 +908,10 @@
     const carousel = document.getElementById('cards-carousel');
     Array.from(carousel.children).forEach(child => {
       const isSelected = child.dataset.cardId === cardId;
-      child.classList.toggle('border-lime-400', isSelected);
+      child.classList.toggle('ring-2', isSelected);
+      child.classList.toggle('ring-lime-400', isSelected);
+      child.classList.toggle('border-transparent', isSelected);
+      child.classList.toggle('border', !isSelected);
       child.classList.toggle('border-zinc-800', !isSelected);
       child.classList.toggle('hover:border-zinc-700', !isSelected);
     });
@@ -1090,7 +1121,7 @@
         : `<button onclick="deleteCategory('${cat.id}')" title="Kategoriyi sil" class="text-zinc-500 hover:text-red-400 transition-colors ml-1 leading-none">✕</button>`;
 
       return `
-        <span class="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-full px-3 py-1.5 text-xs font-medium text-zinc-200">
+        <span class="flex items-center gap-2 surface-inset rounded-full px-3 py-1.5 text-xs font-medium text-zinc-200">
           <span class="w-2 h-2 rounded-full ${colorBg(cat.color)}"></span>
           ${escapeHtml(cat.name)}
           ${trailing}
@@ -1188,7 +1219,7 @@
       const isActive = !isCustom && state.selectedInstallment === n;
       const label = n === 1 ? 'Tek Çekim' : `${n} Taksit`;
       const activeClasses = 'bg-lime-400 text-zinc-950';
-      const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+      const inactiveClasses = 'surface-inset text-zinc-300 hover:border-zinc-700';
       return `
         <button type="button" onclick="selectInstallment(${n})" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? activeClasses : inactiveClasses}">
           ${label}
@@ -1197,7 +1228,7 @@
     }).join('');
 
     const customActiveClasses = 'bg-lime-400 text-zinc-950';
-    const customInactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+    const customInactiveClasses = 'surface-inset text-zinc-300 hover:border-zinc-700';
     const customLabel = isCustom ? `${state.selectedInstallment} Taksit` : 'Diğer';
 
     container.innerHTML = chips + `
@@ -1382,7 +1413,7 @@
       const isActive = !isCustom && editSelectedInstallment === n;
       const label = n === 1 ? 'Tek Çekim' : `${n} Taksit`;
       const activeClasses = 'bg-lime-400 text-zinc-950';
-      const inactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+      const inactiveClasses = 'surface-inset text-zinc-300 hover:border-zinc-700';
       return `
         <button type="button" onclick="selectEditInstallment(${n})" class="px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${isActive ? activeClasses : inactiveClasses}">
           ${label}
@@ -1391,7 +1422,7 @@
     }).join('');
 
     const customActiveClasses = 'bg-lime-400 text-zinc-950';
-    const customInactiveClasses = 'bg-zinc-950 border border-zinc-800 text-zinc-300 hover:border-zinc-700';
+    const customInactiveClasses = 'surface-inset text-zinc-300 hover:border-zinc-700';
     const customLabel = isCustom ? `${editSelectedInstallment} Taksit` : 'Diğer';
 
     container.innerHTML = chips + `
@@ -1827,7 +1858,7 @@
       const chevronId = `upcoming-chevron-${cardId}-${idx}`;
 
       return `
-        <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
+        <div class="surface-inset rounded-xl p-3">
           <button type="button" onclick="toggleUpcomingMonth('${detailId}', '${chevronId}')" class="w-full flex items-center justify-between gap-2">
             <div class="flex items-center gap-1.5">
               <svg id="${chevronId}" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-zinc-500 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
