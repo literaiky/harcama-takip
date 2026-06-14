@@ -16,16 +16,16 @@
   html {
     -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
-    overscroll-behavior: none;
   }
   body {
     -webkit-tap-highlight-color: transparent;
     height: 100%;
+    height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
-    position: fixed;
-    inset: 0;
+    margin: 0;
   }
 
   /* The page itself never scrolls/bounces (feels like a native app, not a
@@ -33,11 +33,13 @@
      is contained so it doesn't chain to the page. */
   #auth-screen, #app-screen {
     height: 100%;
+    height: 100dvh;
     overflow-y: auto;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     padding-top: env(safe-area-inset-top);
+    box-sizing: border-box;
   }
 
   /* Prevent iOS Safari from auto-zooming the page when focusing form fields
@@ -971,12 +973,15 @@
     }).sort((a, b) => b.amount - a.amount);
 
     // Build SVG donut chart with category + percentage labels placed
-    // around the ring at each segment's midpoint angle.
-    const radius = 80;
-    const strokeWidth = 28;
+    // around the ring, connected by short leader lines.
+    const radius = 66;
+    const strokeWidth = 24;
     const circumference = 2 * Math.PI * radius;
-    const labelRadius = radius + strokeWidth / 2 + 34; // distance of label center from chart center
-    const center = radius + strokeWidth / 2 + 44;      // chart center coords, leaves room for labels
+    const lineStart = radius + strokeWidth / 2 + 4;  // leader line starts just outside the ring
+    const lineEnd = lineStart + 10;                  // leader line ends here, label sits after this
+    const labelGap = 4;                              // gap between leader line end and label text
+    const margin = 74;                               // room around the ring for labels/lines
+    const center = radius + strokeWidth / 2 + margin;
     const size = center * 2;
 
     let offsetAccum = 0;
@@ -1008,21 +1013,35 @@
       if (item.pct < MIN_PCT_FOR_RING_LABEL) return '';
 
       const midAngleRad = (midAngleDeg * Math.PI) / 180;
-      const lx = center + labelRadius * Math.cos(midAngleRad);
-      const ly = center + labelRadius * Math.sin(midAngleRad);
+      const cos = Math.cos(midAngleRad);
+      const sin = Math.sin(midAngleRad);
 
-      const name = item.name.length > 10 ? item.name.slice(0, 9) + '…' : item.name;
+      const x1 = center + lineStart * cos;
+      const y1 = center + lineStart * sin;
+      const x2 = center + lineEnd * cos;
+      const y2 = center + lineEnd * sin;
+
+      // Anchor text away from the ring based on which side it's on, so
+      // labels never get cut off by the SVG edge.
+      const isRight = cos > 0.15;
+      const isLeft = cos < -0.15;
+      const anchor = isRight ? 'start' : (isLeft ? 'end' : 'middle');
+      const tx = x2 + (isRight ? labelGap : isLeft ? -labelGap : 0);
+      const ty = y2 + (anchor === 'middle' ? (sin > 0 ? 12 : -4) : 0);
+
+      const name = item.name.length > 8 ? item.name.slice(0, 7) + '…' : item.name;
 
       return `
-        <g transform="translate(${lx} ${ly})">
-          <text text-anchor="middle" dy="-3" font-size="10" font-weight="700" fill="${colorHex(item.color)}">%${item.pct.toFixed(1)}</text>
-          <text text-anchor="middle" dy="10" font-size="9" font-weight="500" fill="#a1a1aa">${escapeHtml(name)}</text>
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" />
+        <g transform="translate(${tx} ${ty})">
+          <text text-anchor="${anchor}" dy="-2" font-size="10" font-weight="700" fill="${colorHex(item.color)}">%${item.pct.toFixed(1)}</text>
+          <text text-anchor="${anchor}" dy="11" font-size="9" font-weight="500" fill="#a1a1aa">${escapeHtml(name)}</text>
         </g>
       `;
     }).join('');
 
     chartWrap.innerHTML = `
-      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="max-width:100%; height:auto;">
         ${segments}
         ${labels}
       </svg>
