@@ -222,6 +222,45 @@
       </div>
     </div>
 
+    <!-- SET NEW PASSWORD VIEW (shown after clicking the email reset link) -->
+    <div id="auth-reset-view" class="hidden">
+      <div class="text-center mb-8">
+        <div class="w-14 h-14 rounded-2xl bg-lime-400/10 flex items-center justify-center mx-auto mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-lime-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-12V7a4 4 0 10-8 0v2"/></svg>
+        </div>
+        <h1 class="text-2xl font-bold mb-1.5">Yeni Şifre Belirle</h1>
+        <p class="text-sm text-zinc-500">Hesabın için yeni bir şifre oluştur</p>
+      </div>
+
+      <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-xs font-medium text-zinc-400">Yeni Şifre</label>
+            <p class="text-xs text-zinc-500">En az 6 karakter</p>
+          </div>
+          <div class="relative">
+            <input type="password" id="reset-password" placeholder="••••••••" autocomplete="new-password" class="w-full surface-inset rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+            <button type="button" onclick="toggleResetPasswordVisibility()" aria-label="Şifreyi göster/gizle" class="absolute right-0 top-0 h-full w-11 flex items-center justify-center text-zinc-500 hover:text-zinc-300 transition-colors">
+              <svg id="reset-password-eye-on" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <svg id="reset-password-eye-off" class="hidden w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18M10.584 10.587a2 2 0 002.829 2.83M9.363 5.365A9.466 9.466 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-1.847 3.34M6.226 6.228A10.45 10.45 0 002.458 12c1.274 4.057 5.065 7 9.542 7a9.477 9.477 0 004.097-.918"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-zinc-400 mb-2">Yeni Şifre (Tekrar)</label>
+          <input type="password" id="reset-password-confirm" placeholder="••••••••" autocomplete="new-password" class="w-full surface-inset rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-lime-400 transition-colors">
+        </div>
+
+        <p id="reset-error" class="hidden text-xs font-medium text-red-400"></p>
+        <p id="reset-info" class="hidden text-xs font-medium text-lime-400"></p>
+
+        <button id="reset-submit" onclick="handlePasswordReset()" class="w-full bg-lime-400 hover:bg-lime-300 active:bg-lime-300 text-zinc-950 font-bold rounded-xl py-3.5 transition-colors">
+          Şifreyi Güncelle
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -795,6 +834,7 @@
 
   function showAuthMainView() {
     document.getElementById('auth-forgot-view').classList.add('hidden');
+    document.getElementById('auth-reset-view').classList.add('hidden');
     document.getElementById('auth-main-view').classList.remove('hidden');
   }
 
@@ -824,6 +864,81 @@
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Sıfırlama Bağlantısı Gönder';
+    }
+  }
+
+  /* ---------------------------------------------------------
+     AUTH: SET NEW PASSWORD (after clicking email reset link)
+  --------------------------------------------------------- */
+  function showResetPasswordView() {
+    document.getElementById('auth-main-view').classList.add('hidden');
+    document.getElementById('auth-forgot-view').classList.add('hidden');
+    document.getElementById('auth-reset-view').classList.remove('hidden');
+
+    document.getElementById('reset-error').classList.add('hidden');
+    document.getElementById('reset-info').classList.add('hidden');
+    document.getElementById('reset-password').value = '';
+    document.getElementById('reset-password-confirm').value = '';
+
+    showAuthScreenOnly();
+  }
+
+  // Show only the auth screen without resetting it back to the main view
+  // (used when arriving via a password recovery link, before any session UI is shown)
+  function showAuthScreenOnly() {
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('app-screen').classList.add('hidden');
+  }
+
+  function toggleResetPasswordVisibility() {
+    const input = document.getElementById('reset-password');
+    const eyeOn = document.getElementById('reset-password-eye-on');
+    const eyeOff = document.getElementById('reset-password-eye-off');
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    eyeOn.classList.toggle('hidden', isHidden);
+    eyeOff.classList.toggle('hidden', !isHidden);
+  }
+
+  async function handlePasswordReset() {
+    const errorEl = document.getElementById('reset-error');
+    const infoEl = document.getElementById('reset-info');
+    errorEl.classList.add('hidden');
+    infoEl.classList.add('hidden');
+
+    const password = document.getElementById('reset-password').value;
+    const confirm = document.getElementById('reset-password-confirm').value;
+
+    if (!password || !confirm) {
+      return showError(errorEl, 'Lütfen şifreni iki alana da gir.');
+    }
+    if (password.length < 6) {
+      return showError(errorEl, 'Şifre en az 6 karakter olmalı.');
+    }
+    if (password !== confirm) {
+      return showError(errorEl, 'Girdiğin şifreler eşleşmiyor.');
+    }
+
+    const submitBtn = document.getElementById('reset-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Güncelleniyor...';
+
+    try {
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) throw error;
+
+      infoEl.textContent = 'Şifren güncellendi! Hesabına yönlendiriliyorsun...';
+      infoEl.classList.remove('hidden');
+
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session) {
+        setTimeout(() => onAuthSuccess(data.session.user), 800);
+      }
+    } catch (err) {
+      showError(errorEl, translateAuthError(err.message));
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Şifreyi Güncelle';
     }
   }
 
@@ -2271,11 +2386,24 @@
     }
   }
 
+  // Set when a password recovery link brings the user back to the app, so
+  // init() shows the "set new password" screen instead of logging straight in.
+  let isPasswordRecovery = false;
+
   async function init() {
+    // Listen for the PASSWORD_RECOVERY event Supabase fires when the user
+    // arrives via the "reset password" link in their email.
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        isPasswordRecovery = true;
+        showResetPasswordView();
+      }
+    });
+
     const { data } = await supabaseClient.auth.getSession();
-    if (data.session) {
+    if (data.session && !isPasswordRecovery) {
       await onAuthSuccess(data.session.user);
-    } else {
+    } else if (!isPasswordRecovery) {
       showAuthScreen();
     }
     switchPage('home');
