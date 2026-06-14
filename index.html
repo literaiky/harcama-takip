@@ -2398,10 +2398,6 @@
     }
   }
 
-  // Set when a password recovery link brings the user back to the app, so
-  // init() shows the "set new password" screen instead of logging straight in.
-  let isPasswordRecovery = false;
-
   async function init() {
     const { data } = await supabaseClient.auth.getSession();
     if (data.session && !isPasswordRecovery) {
