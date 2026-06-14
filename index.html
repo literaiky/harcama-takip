@@ -1082,7 +1082,7 @@
     const chartH = Math.max(sideHeight, r * 2) + 24;
     const cy = chartH / 2;
 
-    const stepOut = 26;        // how far the line steps straight out from the pie edge
+    const spineGap = 20;       // how far the shared spine sits beyond the pie radius
     const labelLineX = r + 46; // x distance (from center) where the leader line ends, label begins
     const cx = labelLineX + 110; // half-width reserved for labels on each side
     const totalW = cx * 2;
@@ -1090,21 +1090,27 @@
     function buildLabels(sideItems, isRight) {
       const sign = isRight ? 1 : -1;
       const startY = cy - (sideItems.length * rowHeight) / 2 + rowHeight / 2;
+      // Shared vertical "spine" all leader lines pass through before
+      // fanning out to their label. Routing through a common x first
+      // (at each item's own edge height), then to the label, guarantees
+      // the lines preserve relative order and never cross — since both
+      // the spine points and the labels are ordered the same way (by
+      // edge angle / row index).
+      const spineX = sign * (r + spineGap);
       return sideItems.map((item, i) => {
         const labelY = startY + i * rowHeight;
         const lineEndX = cx + sign * labelLineX;
         const textX = lineEndX + sign * 8;
         const textAnchor = isRight ? 'start' : 'end';
 
-        // Straight elbow line: pie edge -> step outward (same y as edge) -> label height
         const p0x = cx + item.edgeX;
         const p0y = cy + item.edgeY;
-        const elbowX = p0x + sign * stepOut;
+        const spinePtX = cx + spineX;
 
         const name = item.name.length > 13 ? item.name.slice(0, 12) + '…' : item.name;
 
         return `
-          <polyline points="${p0x},${p0y} ${elbowX},${p0y} ${lineEndX},${labelY}"
+          <polyline points="${p0x},${p0y} ${spinePtX},${p0y} ${lineEndX},${labelY}"
             fill="none" stroke="${colorHex(item.color)}" stroke-width="1.5" opacity="0.6" stroke-linejoin="round" />
           <text x="${textX}" y="${labelY - 5}" text-anchor="${textAnchor}" font-size="13" font-weight="700" fill="#ffffff">${escapeHtml(name)}</text>
           <text x="${textX}" y="${labelY + 12}" text-anchor="${textAnchor}" font-size="12.5" font-weight="600" fill="#a1a1aa">%${item.pct.toFixed(1)}</text>
